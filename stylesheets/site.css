@@ -11,7 +11,11 @@
         padding: 20px;
 }
 
-#header a { text-decoration: none; }
+#header a
+{
+        text-decoration: none;
+        color:#000;
+}
 
 #header h1 { margin: 0; }
 
