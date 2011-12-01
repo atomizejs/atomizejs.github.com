@@ -72,4 +72,4 @@ is to grab and install the packages from
 6. `npm install atomize-server`
 
 Then, when starting node, do so as:
-    `node --harmony-collections --harmony-proxies app.js`
+    node --harmony-collections --harmony-proxies app.js
