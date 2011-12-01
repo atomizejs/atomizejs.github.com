@@ -9,7 +9,7 @@ AtomizeJS is made up of several components:
 
 * Client-side libraries. These must be `<script/>`-included in your
   HTML:
-    * [sock.js](https://github.com/sockjs/sockjs-client)
+    * [SockJS client](https://github.com/sockjs/sockjs-client)
     * [cereal.js](https://github.com/atomizejs/cereal/blob/master/lib/cereal.js)
     * [atomize.js](https://github.com/atomizejs/atomize-client/blob/master/lib/atomize.js)
 
@@ -65,15 +65,10 @@ V8. Thus to prepare NodeJS, please follow these steps:
 least version 3.7. If you're on Debian/Ubuntu then the easiest route
 is to grab and install the packages from
 [this PPA](https://launchpad.net/~ilya-novoselov/+archive/hemi/+packages).
-
 2. Download the latest [NodeJS](http://nodejs.org/#download) source.
-
 3. Unpack it.
-
 4. `./configure --shared-v8`
-
 5. `make`, `make install` as usual.
-
 6. `npm install atomize-server`
 
 Then, when starting node, do so as:
