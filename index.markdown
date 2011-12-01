@@ -3,12 +3,7 @@ layout: default
 title: AtomizeJS
 ---
 
-# AtomizeJS
-
-*A Distributed Software Transactional Memory implementation in
-JavaScript.*
-
-## Introduction
+# Introduction
 
 Writing concurrent programs is tricky. Languages tend to go down one
 of two roots: either threads are allowed to directly access the same
