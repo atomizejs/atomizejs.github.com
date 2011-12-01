@@ -7,9 +7,11 @@
 
 #header
 {
-        background:#ccc;
+        background:#79ccf5;
         padding: 20px;
 }
+
+#header a {}
 
 #header h1 { margin: 0; }
 
@@ -17,7 +19,7 @@
 {
         float: left;
         width: 600px;
-        background:#333;
+        background:#008dd7;
 }
 
 #navigation ul
@@ -39,10 +41,10 @@
         padding: 5px 10px;
         color:#fff;
         text-decoration: none;
-        border-right: 1px solid#fff;
+        border-right: 1px solid#79ccf5;
 }
 
-#navigation li a:hover { background:#383; }
+#navigation li a:hover { background:#474ee4; }
 
 #content
 {
