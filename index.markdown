@@ -4,8 +4,8 @@ title: AtomizeJS
 
 # AtomizeJS
 
-*A Proof-of-Concept Distributed Software Transactional Memory
-implementation in JavaScript.*
+*A Distributed Software Transactional Memory implementation in
+JavaScript.*
 
 ## Introduction
 
@@ -39,19 +39,19 @@ The mental model you should have when using AtomizeJS is as follows:
   change the objects as desired. These functions are then run by
   AtomizeJS as transactions. AtomizeJS ensures that these transaction
   functions are run:
-    * *atomically*: Either the transaction functions completes or
-       fails in its entirety - it is impossible for a transaction to
-       partly succeed.
-    * *consistently*: The transaction function starts with a
-       consistent view of the object graph, and it ends with a
-       consistent view. If the transaction succeeds then the changes
-       the transaction function has made are completely applied. If
-       the transaction errors, then any changes the transaction
-       function has made are completely undone.
-    * *in isolation*: The transaction function is run as if no other
-       transactions are running at the same time - the transaction
-       function does not have to think about locking or critical
-       regions.
+      * *atomically*: Either the transaction functions completes or
+        fails in its entirety - it is impossible for a transaction to
+        partly succeed.
+      * *consistently*: The transaction function starts with a
+        consistent view of the object graph, and it ends with a
+        consistent view. If the transaction succeeds then the changes
+        the transaction function has made are completely applied. If
+        the transaction errors, then any changes the transaction
+        function has made are completely undone.
+      * *in isolation*: The transaction function is run as if no other
+        transactions are running at the same time - the transaction
+        function does not have to think about locking or critical
+        regions.
 
 Transactions cannot deadlock: when a transaction function is run,
 AtomizeJS detects if other transactions have modified the same objects
