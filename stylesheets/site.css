@@ -11,7 +11,7 @@
         padding: 20px;
 }
 
-#header a {}
+#header a { text-decoration: none; }
 
 #header h1 { margin: 0; }
 
