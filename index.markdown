@@ -60,3 +60,18 @@ mechanisms as you would with message-passing: all the code you write
 assumes the data is local - you never write `send` or have `receive`
 call-backs.
 
+
+# Writing applications with transactions
+
+Many applications do more and more work on the client-side - i.e. in
+the browser. But currently, if a client wants to modify some global
+state, the usual practice is to make some sort of request to the
+server, whether it's via XHR or WebSockets or some other means. The
+server receives the message and acts on it. This means you have to
+write both client-side code, and server-side code. *But with
+AtomizeJS, you can **just** write client-side code*, and rely on
+AtomizeJS to distribute the changes to all clients.
+
+Indeed, I have written an
+[entire multi-player game - *bomberman*](https://github.com/atomizejs/atomize-examples/blob/master/bomberman/index.html)
+that has no server-side code at all beyond the AtomizeJS server.
