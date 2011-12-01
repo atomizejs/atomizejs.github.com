@@ -1,6 +1,6 @@
 ---
 layout: default
-title: AtomizeJS
+title: Home
 ---
 
 # Introduction
@@ -24,7 +24,7 @@ system, combined with the increased potential for partial failures.
 
 AtomizeJS is a project which aims to make it easy to write programs in
 JavaScript that can be both concurrent and distributed. It does this
-by implementing Distributed Software Transactional Memory.
+by implementing Distributed Software Transactional Memory (DSTM).
 
 The mental model you should have when using AtomizeJS is as follows:
 
@@ -75,3 +75,24 @@ AtomizeJS to distribute the changes to all clients.
 Indeed, I have written an
 [entire multi-player game - *bomberman*](https://github.com/atomizejs/atomize-examples/blob/master/bomberman/index.html)
 that has no server-side code at all beyond the AtomizeJS server.
+
+
+# Beyond plain transactions
+
+If a transaction allows you to safely modify global data, what about
+*waiting* for someone else to modify a value? If you can *wait* for
+someone else to modify a value then you can very easily implement the
+observer pattern, which, across global distributed data gets you
+broadcast and other general-purpose communication mechanisms, amongst
+other things. Well, AtomizeJS supports both the `retry` and `orElse`
+functions of STM, which gives you the ability to force a transaction
+to suspend and be restarted only when values which have been read as
+part of the transaction have been changed.
+
+AtomizeJS also supports nested transactions.
+
+On the server, a NodeJS server can also be a client to itself running
+the AtomizeJS server. This means that you can, when you need or want
+to, write server side JavaScript that also uses AtomizeJS to safely
+modify global state that is shared with clients. There no API changes
+at all.

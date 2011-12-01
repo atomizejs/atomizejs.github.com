@@ -1,0 +1,80 @@
+---
+layout: default
+title: Installation
+---
+
+# Components
+
+AtomizeJS is made up of several components:
+
+* Client-side libraries. These must be `<script/>`-included in your
+  HTML:
+    * [sock.js](https://github.com/sockjs/sockjs-client)
+    * [cereal.js](https://github.com/atomizejs/cereal/blob/master/lib/cereal.js)
+    * [atomize.js](https://github.com/atomizejs/atomize-client/blob/master/lib/atomize.js)
+
+* Server. Currently, the only AtomizeJS server is written in
+  JavaScript for NodeJS. You should be able to install it with nothing
+  more than `npm install atomize-server`.
+
+
+# Repositories
+
+* [atomize-server-node](https://github.com/atomizejs/atomize-server-node):
+  The NodeJS server. This itself depends on atomize-client, cereal and
+  [sockjs-node](https://github.com/sockjs/sockjs-node).
+* [atomize-client](https://github.com/atomizejs/atomize-client): The
+  AtomizeJS client library. This depends on
+  [sock.js](https://github.com/sockjs/sockjs-client) and cereal.
+* [cereal](https://github.com/atomizejs/cereal): This is just an
+  object serialisation library.
+
+
+# Client Requirements
+
+AtomizeJS is currently still very alpha, and depends on some
+bleeding-edge features of JavaScript. In particular, it depends on
+[WeakMaps](http://wiki.ecmascript.org/doku.php?id=harmony:weak_maps)
+and more crucially
+[Proxies](http://wiki.ecmascript.org/doku.php?id=harmony:proxies)
+(which are soon to be replaced by
+[Direct-Proxies](http://wiki.ecmascript.org/doku.php?id=harmony:direct_proxies)).
+
+* The only web browsers known to work currently are Firefox 8, or
+  Chrome 17.
+* If you are using Chrome, then you need to start Chrome as:
+  `google-chrome --js-flags="--harmony-proxies --harmony-collections"`
+
+
+# Server Requirements
+
+AtomizeJS is currently still very alpha, and depends on some
+bleeding-edge features of JavaScript. In particular, it depends on
+[WeakMaps](http://wiki.ecmascript.org/doku.php?id=harmony:weak_maps)
+and more crucially
+[Proxies](http://wiki.ecmascript.org/doku.php?id=harmony:proxies)
+(which are soon to be replaced by
+[Direct-Proxies](http://wiki.ecmascript.org/doku.php?id=harmony:direct_proxies)).
+
+[NodeJS](http://nodejs.org/) uses the
+[V8 JavaScript engine](http://code.google.com/p/v8/). Currently, no
+released version of NodeJS comes with a sufficiently recent version of
+V8. Thus to prepare NodeJS, please follow these steps:
+
+1. Install the latest [V8](http://code.google.com/p/v8/). You need at
+least version 3.7. If you're on Debian/Ubuntu then the easiest route
+is to grab and install the packages from
+[this PPA](https://launchpad.net/~ilya-novoselov/+archive/hemi/+packages).
+
+2. Download the latest [NodeJS](http://nodejs.org/#download) source.
+
+3. Unpack it.
+
+4. `./configure --shared-v8`
+
+5. `make`, `make install` as usual.
+
+6. `npm install atomize-server`
+
+Then, when starting node, do so as:
+    `node --harmony-collections --harmony-proxies app.js`

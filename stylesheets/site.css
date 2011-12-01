@@ -13,6 +13,37 @@
 
 #header h1 { margin: 0; }
 
+#navigation
+{
+        float: left;
+        width: 600px;
+        background:#333;
+}
+
+#navigation ul
+{
+        margin: 0;
+        padding: 0;
+}
+
+#navigation ul li
+{
+        list-style-type: none;
+        display: inline;
+}
+
+#navigation li a
+{
+        display: block;
+        float: left;
+        padding: 5px 10px;
+        color:#fff;
+        text-decoration: none;
+        border-right: 1px solid#fff;
+}
+
+#navigation li a:hover { background:#383; }
+
 #content
 {
         clear: left;
