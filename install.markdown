@@ -30,7 +30,7 @@ AtomizeJS is made up of several components:
   object serialisation library.
 
 
-# Client Requirements
+# Requirements
 
 AtomizeJS is currently still very alpha, and depends on some
 bleeding-edge features of JavaScript. In particular, it depends on
@@ -39,24 +39,18 @@ and more crucially
 [Proxies](http://wiki.ecmascript.org/doku.php?id=harmony:proxies)
 (which are soon to be replaced by
 [Direct-Proxies](http://wiki.ecmascript.org/doku.php?id=harmony:direct_proxies)).
+
+## Client Requirements
 
 * The only web browsers known to work currently are Firefox 8, or
   Chrome 17.
 * If you are using Chrome, then you need to start Chrome as:
   `google-chrome --js-flags="--harmony-proxies --harmony-collections"`
 
+## Server Requirements
 
-# Server Requirements
-
-AtomizeJS is currently still very alpha, and depends on some
-bleeding-edge features of JavaScript. In particular, it depends on
-[WeakMaps](http://wiki.ecmascript.org/doku.php?id=harmony:weak_maps)
-and more crucially
-[Proxies](http://wiki.ecmascript.org/doku.php?id=harmony:proxies)
-(which are soon to be replaced by
-[Direct-Proxies](http://wiki.ecmascript.org/doku.php?id=harmony:direct_proxies)).
-
-[NodeJS](http://nodejs.org/) uses the
+Currently, the only AtomizeJS server requires
+[NodeJS](http://nodejs.org/). NodeJS uses the
 [V8 JavaScript engine](http://code.google.com/p/v8/). Currently, no
 released version of NodeJS comes with a sufficiently recent version of
 V8. Thus to prepare NodeJS, please follow these steps:
