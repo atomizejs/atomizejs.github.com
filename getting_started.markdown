@@ -219,7 +219,7 @@ special. However, if you assign an object, then you need to `lift` the
 object to ensure that AtomizeJS starts managing the object
 correctly. For example:
 
-{% highlight html %}
+{% highlight javascript %}
 function start () {
     atomize.atomically(function () {
         if (atomize.root.x === undefined) {
