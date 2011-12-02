@@ -183,9 +183,11 @@ which have *side-effects*. For example, if you rewrote this code as:
 
 then on the second client to visit the page, you'll probably see two
 lines output on the console: the first being `Wrote ...` and the
-second being `Read ...`. The reason is the same as before, but this
-time, because we're doing the `console.log` *within* the transaction
-function, it will be run every time the transaction is run.
+second being `Read ...`. The reason is the same as described above
+(i.e. the second client has to rerun the transaction function as the
+commit will fail after the first run), but now, because we're doing
+the `console.log` *within* the transaction function, the `console.log`
+will occur every time the transaction function is run.
 
 Whilst a transaction that fails to commit undoes all the modifications
 of objects managed by AtomizeJS (i.e. everything that has been
