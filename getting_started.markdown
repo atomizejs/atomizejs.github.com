@@ -66,7 +66,7 @@ you have the AtomizeJS server running as described above, pointing
 your browser directly at the HTML files directly on your machine
 (i.e. with a `file:///...` URL) will work perfectly well.
 
-## Writing and reading
+# Writing and reading
 
     function start () {
         atomize.atomically(function () {
@@ -117,7 +117,7 @@ This introduces quite a lot of concepts.
   the second client there, and thus will read the previously written
   date.
 
-### The importance of continuations
+## The importance of continuations
 
 It is easy to forget that the continuation-passing-style model is
 required. For example, you might be tempted to write the above code
@@ -163,7 +163,7 @@ the `Wrote ...` result to the `result` variable. This is why it's
 important to use the continuation-passing-style whenever you need to
 depend on the transaction having committed successfully.
 
-### Avoiding side effects
+## Avoiding side effects
 
 Equally, it's important to avoid doing things within a transaction
 which have *side-effects*. For example, if you rewrote this code as:
@@ -199,3 +199,115 @@ transaction that allow the continuation to figure out what it should
 be doing. The continuation is only run once, and only run once the
 transaction has successfully committed, so by that point, the result
 of the transaction function is stable.
+
+## Writing Objects and Primitives
+
+So far, we have written only primitive values into the `root` object
+graph. When you assign a primitive value (i.e. a boolean, a string, a
+number or `undefined`), you don't need to do anything
+special. However, if you assign an object, then you need to `lift` the
+object to ensure that AtomizeJS starts managing the object
+correctly. For example:
+
+    function start () {
+        atomize.atomically(function () {
+            if (atomize.root.x === undefined) {
+                atomize.root.x = atomize.lift({a: "hello"});
+                atomize.root.x.date = Date.toString();
+                return "Wrote " + atomize.root.x.date;
+            } else {
+                var result = atomize.root.x.date;
+                delete atomize.root.x;
+                return "Read " + result;
+            }
+        }, function (result) {
+            console.log(result);
+        });
+    }
+
+If you do not call `lift` then you'll get an error.
+
+## Objects outside of `root`
+
+Any call to `lift` will return an object that is managed by
+AtomizeJS. This need not be part of the `root` object. For example:
+
+    var myObj;
+    function start () {
+        atomize.atomically(function () {
+            return atomize.lift({});
+        }, function (obj) {
+            myObj = obj;
+        });
+    }
+
+`myObj` now contains an object that is managed by AtomizeJS. Of
+course, because it's not reachable from the `root` object, it won't
+get distributed to other clients. But, for example, we can take
+objects that were reachable from the `root` object, and hold on to
+them, even if later on, they get detached from the `root` object. We
+can use this to build a broadcast queue...
+
+
+# Building communication
+
+So far, we've seen how you can build transactions that act on what
+they find in the `root` object, and can modify properties and values
+within the `root` object. For communication between different parties,
+you need *sending* operations and *receiving* operations. In our case,
+*sending* is very simple: it's just writing to a known location within
+the `root` object. For *receiving*, we'd like to avoid *spinning*: if
+no new value has been written for us to receive, we don't want to be
+constantly restarting the transaction. Instead, we want the AtomizeJS
+system to remember the transaction, and automatically restart it when
+the values of variables we've read so far in the transaction have been
+changed. This avoids the need for spinning. This is the purpose of the
+`retry` operation. For example:
+
+    function start () {
+        if (Math.random() > 0.2) {
+            receive();
+        } else {
+            send();
+        }
+    }
+    
+    function receive () {
+        atomize.atomically(function () {
+            if (atomize.root.value === undefined) {
+                atomize.retry();
+            } else {
+                return atomize.root.value;
+            }
+        }, function (result) {
+            console.log(result);
+        });
+    }
+    
+    function send () {
+        atomize.atomically(function () {
+            atomize.root.value = Date().toString();
+        });
+    }
+
+Try opening up several browser windows and pointing them all at the
+same HTML page.
+
+Here, we have an 80% chance that a new client will enter the `receive`
+function. If there is no value to receive then it will be suspended,
+and only woken up and restarted once the variables that it has read so
+far (in this case, just the `root` object) are modified.
+
+Eventually, one of the clients will enter the `send` function, and
+will write to the `value` property of the `root` object. At this
+point, all the other clients, waiting in the `receive` transaction,
+will have their transaction function restarted. The second time
+through this receive transaction, the clients will see the newly
+written `value` property. This time, they'll not go into the `retry`
+branch of the `if` statement, and instead will receive the result and
+complete the transaction. We've just built a broadcast mechanism.
+
+Whilst the `retry` operation suspends the current transaction, it too
+does not block. Thus as before, it's important to use
+continuation-passing-style when you need to run code after the
+transaction has finally completed.
