@@ -10,18 +10,20 @@ plain AtomizeJS server. See the [install](/install.html) guide for
 acquiring the libraries. Once you've done that, you just need to put
 the following boiler-plate in a file (call it `app.js`):
 
-    {% highlight javascript %}var http = require('http');
-    var atomizeServer = require('atomize-server');
-    var server = http.createServer();
-    var port = 9999;
-    var port_index = process.argv.indexOf('--port');
-    if (port_index > -1) {
-        port = process.argv[port_index + 1];
-    }
-    
-    atomizeServer.create(server, '[/]atomize');
-    console.log(" [*] Listening on 0.0.0.0:" + port);
-    server.listen(port, '0.0.0.0');{% endhighlight %}
+{% highlight javascript %}
+var http = require('http');
+var atomizeServer = require('atomize-server');
+var server = http.createServer();
+var port = 9999;
+var port_index = process.argv.indexOf('--port');
+if (port_index > -1) {
+    port = process.argv[port_index + 1];
+}
+
+atomizeServer.create(server, '[/]atomize');
+console.log(" [*] Listening on 0.0.0.0:" + port);
+server.listen(port, '0.0.0.0');
+{% endhighlight %}
 
 Then start up NodeJS with
     node --harmony-collections --harmony-proxies app.js
