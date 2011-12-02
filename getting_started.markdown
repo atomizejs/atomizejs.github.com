@@ -73,7 +73,7 @@ your browser directly at the HTML files directly on your machine
 # Writing and reading
 
 {% highlight javascript %}
-function start () {
+function start() {
     atomize.atomically(function () {
         if (atomize.root.x === undefined) {
             atomize.root.x = Date.toString();
@@ -130,7 +130,7 @@ required. For example, you might be tempted to write the above code
 as:
 
 {% highlight javascript %}
-function start () {
+function start() {
     var result;
     atomize.atomically(function () {
         if (atomize.root.x === undefined) {
@@ -177,7 +177,7 @@ Equally, it's important to avoid doing things within a transaction
 which have *side-effects*. For example, if you rewrote this code as:
 
 {% highlight javascript %}
-function start () {
+function start() {
     atomize.atomically(function () {
         if (atomize.root.x === undefined) {
             atomize.root.x = Date.toString();
@@ -220,7 +220,7 @@ object to ensure that AtomizeJS starts managing the object
 correctly. For example:
 
 {% highlight javascript %}
-function start () {
+function start() {
     atomize.atomically(function () {
         if (atomize.root.x === undefined) {
             atomize.root.x = atomize.lift({a: "hello"});
@@ -246,7 +246,7 @@ AtomizeJS. This need not be part of the `root` object. For example:
 
 {% highlight javascript %}
 var myObj;
-function start () {
+function start() {
     atomize.atomically(function () {
         return atomize.lift({});
     }, function (obj) {
@@ -279,7 +279,7 @@ changed. This avoids the need for spinning. This is the purpose of the
 `retry` operation. For example:
 
 {% highlight javascript %}
-function start () {
+function start() {
     if (Math.random() > 0.2) {
         receive();
     } else {
@@ -287,7 +287,7 @@ function start () {
     }
 }
 
-function receive () {
+function receive() {
     atomize.atomically(function () {
         if (atomize.root.value === undefined) {
             atomize.retry();
@@ -299,7 +299,7 @@ function receive () {
     });
 }
 
-function send () {
+function send() {
     atomize.atomically(function () {
         atomize.root.value = Date().toString();
     });
