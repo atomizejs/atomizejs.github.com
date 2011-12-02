@@ -277,7 +277,7 @@ changed. This avoids the need for spinning. This is the purpose of the
             if (atomize.root.value === undefined) {
                 atomize.retry();
             } else {
-                return atomize.root.value;
+                return "Received " + atomize.root.value;
             }
         }, function (result) {
             console.log(result);
@@ -311,3 +311,119 @@ Whilst the `retry` operation suspends the current transaction, it too
 does not block. Thus as before, it's important to use
 continuation-passing-style when you need to run code after the
 transaction has finally completed.
+
+## A broadcast queue
+
+This example "puts it all together". It is a broadcast queue with one
+writer which constantly adds new values to the end of the queue. Every
+reader will receive every value that was added *after* the client
+connected. All clients can work at their own pace.
+
+This example makes use of `retry` and the fact that you can take
+objects out of the `root` object graph and they're still managed by
+AtomizeJS: this is how each client maintains its own position into the
+queue.
+
+The queue that we construct is going to be a standard
+linked-list. Each *cell* has a property `value` (containing the value
+of the cell), and a property `next` (which points to the next
+cell). The `root.queue` pointer is always going to be the *tail* of
+the queue, where new values get added.
+
+First, we need to ensure we only have one writer:
+
+    var writer;
+    var nextValue = 0;
+    
+    function start() {
+        atomize.atomically(function () {
+            if (atomize.root.queue === undefined) {
+                atomize.root.queue = atomize.lift({
+                        next: atomize.lift({}),
+                        value: nextValue
+                    });
+                return true;
+            } else {
+                return false;
+            }
+        }, function (w) {
+            writer = w;
+            loop();
+        });
+    }
+
+By the end of this, the variable `writer` will contain `true` for just
+one client -- the client that arrived first. Now we need to set up the
+loop. We want to make sure this doesn't block the browser so we don't
+use a `while` loop or recursion. Instead, we use `setTimeout`:
+
+    function loop() {
+        if (writer) {
+            setTimeout("write();", 1);
+        } else {
+            setTimeout("read();", 1);
+        }
+    }
+
+Now to write to the queue:
+
+    function write() {
+        nextValue += 1;
+        atomize.atomically(function () {
+            var cell = atomize.root.queue.next;
+            cell.next = atomize.lift({});
+            cell.value = nextValue;
+            atomize.root.queue = cell;
+            return cell.value;
+        }, function (value) {
+            console.log("Wrote " + value);
+            loop();
+        });
+    }
+
+The *tail* of the queue will always contain a pointer to the `next`
+cell which will be empty. Thus we take the `next` cell, and populate
+it with our new value (and new empty cell), and then assign that back
+to the `queue`, thus adding to the tail of the queue. Once the `write`
+transaction has completed, we loop back around to write the next
+value.
+
+Now for reading:
+
+    var myPosition;
+    
+    function read() {
+        if (myPosition === undefined) {
+            atomize.atomically(function () {
+                if (myPosition === undefined) {
+                    myPosition = atomize.root.queue;
+                }
+            }, function () {
+                read();
+            });
+        } else {
+            atomize.atomically(function () {
+                if (myPosition.value === undefined) {
+                    atomize.retry();
+                } else {
+                    return {value: myPosition.value, next: myPosition.next};
+                }
+            }, function (result) {
+                myPosition = result.next;
+                console.log("Read " + result.value);
+                loop();
+            });
+        }
+    }
+
+First, we have to populate the `myPosition` variable with the cell at
+the current tail of the queue, which we do in a separate
+transaction. Once we have a cell in `myPosition` we wait for it to
+have a `value` property, and once it does, we grab that value, and
+then update our position to the next cell in the linked list. This
+way, we don't rely on keeping up with the writer. The value of
+`myPosition` is an object that is managed by AtomizeJS: it was created
+by a call to `lift` in `write`. If the writer goes faster than the
+reader then the value of `myPosition` will differ from
+`atomize.root.queue`, but that's ok: the reader will always be able to
+follow the links and walk the chain to the tail of the queue.
