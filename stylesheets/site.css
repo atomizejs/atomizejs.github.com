@@ -1,7 +1,7 @@
 #container
 {
         margin: 0 auto;
-        width: 600px;
+        width: 720px;
         background:#fff;
         border: 1px solid#79ccf5;
 }
@@ -23,7 +23,7 @@
 #navigation
 {
         float: left;
-        width: 600px;
+        width: 720px;
         background:#008dd7;
 }
 
