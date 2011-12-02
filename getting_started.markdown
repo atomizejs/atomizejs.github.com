@@ -114,7 +114,8 @@ This introduces quite a lot of concepts.
   current date to the `x` property of the `root` object. The effect of
   this transaction exists on the server. Thus even if you shut your
   browser down and restart it, when you next visit the page, you'll be
-  the 2nd client there, and thus will read the previously written date.
+  the second client there, and thus will read the previously written
+  date.
 
 It is easy to forget that the continuation-passing-style model is
 required. For example, you might be tempted to write the above code
@@ -141,7 +142,7 @@ date. This is because whilst the first client really will write the
 date to the `x` property, the second client will start the transaction
 with the default empty root object, and thus start down the first
 branch of the `if` statement. It is only when the second client tries
-to commit the effects of the transaction that it'll be notified by the
+to commit the effects of the transaction that it'll find out from the
 AtomizeJS server that it ran the transaction function on out-of-date
 data. At that point, the second client will be sent the most
 up-to-date version of the `root` object, which will have the `x`
@@ -154,6 +155,8 @@ transaction is trying to commit for the first time (which will likely
 fail). Thus even though the transaction function will be rerun, and
 even though eventually the `result` variable will be set to the
 correct value, the `console.log` line will have been run too early,
-and the wrong result output. This is why it's important to use the
-continuation-passing-style whenever you need to depend on the
-transaction having committed successfully.
+and the wrong result output because at that point in time, the
+transaction function had gone down the first branch, and thus assigned
+the `Wrote ...` result to the `result` variable. This is why it's
+important to use the continuation-passing-style whenever you need to
+depend on the transaction having committed successfully.
