@@ -6,7 +6,7 @@ title: Home
 # Introduction
 
 Writing concurrent programs is tricky. Languages tend to go down one
-of two routes: either threads are allowed to directly access the same
+of two routes: either threads are allowed to access directly the same
 data-structures, and it's left up to the programmer to decide how to
 manage locking; or the language presents a model whereby each thread
 has its own specific memory, and data is passed between threads
