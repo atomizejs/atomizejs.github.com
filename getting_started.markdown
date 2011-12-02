@@ -87,12 +87,13 @@ This introduces quite a lot of concepts.
 
 1. The `atomize.atomically` function takes two arguments.
     1. The first argument is the function that is run as a
-      transaction, atomically. Any result that this function returns
-      is passed to the second argument. This function may run more
-      than once: if this transaction function is found to have read or
-      written data which has in the mean time been modified by another
+      transaction, atomically. This function may run more than once:
+      if this transaction function is found to have read or written
+      data which has in the mean time been modified by another
       transaction, then the effects of this transaction function will
-      be undone, and the transaction restarted, automatically.
+      be undone, and the transaction restarted, automatically. Any
+      result that this function returns is passed to the second
+      argument.
     2. The second argument is a continuation function. It is run once
       the transaction successfully commits, and is passed any result
       returned from the transaction function. This function will only
