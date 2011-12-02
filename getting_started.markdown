@@ -10,6 +10,7 @@ plain AtomizeJS server. See the [install](/install.html) guide for
 acquiring the libraries. Once you've done that, you just need to put
 the following boiler-plate in a file (call it `app.js`):
 
+    {% highlight javascript %}
     var http = require('http');
     var atomizeServer = require('atomize-server');
     var server = http.createServer();
@@ -22,6 +23,7 @@ the following boiler-plate in a file (call it `app.js`):
     atomizeServer.create(server, '[/]atomize');
     console.log(" [*] Listening on 0.0.0.0:" + port);
     server.listen(port, '0.0.0.0');
+    {% endhighlight %}
 
 Then start up NodeJS with
     node --harmony-collections --harmony-proxies app.js
@@ -35,7 +37,7 @@ access to the AtomizeJS system under the path `/atomize`.
 In the following examples, when we wish to output something, we use
 `console.log` which will mean you'll need to be watching the
 JavaScript console in your web browser. Obviously, you can rework
-these do achieve fancy interactions with the DOM if you so wish.
+these to achieve fancy interactions with the DOM if you so wish.
 
 All these examples assume the following HTML template:
 
