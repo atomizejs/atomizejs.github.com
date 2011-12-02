@@ -89,5 +89,16 @@
 code
 {
         border: 1px solid#79ccf5;
-        background:#ceefff;
+        background:#f7fcff;
+}
+
+code pre
+{
+        border: none;
+}
+
+pre
+{
+        border: 1px solid#79ccf5;
+        background:#f7fcff;
 }
