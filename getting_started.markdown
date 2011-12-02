@@ -190,11 +190,12 @@ the `console.log` *within* the transaction function, the `console.log`
 will occur every time the transaction function is run.
 
 Whilst a transaction that fails to commit undoes all the modifications
-of objects managed by AtomizeJS (i.e. everything that has been
-reachable from `atomize.root`), it can't undo other actions. Thus
+of objects managed by AtomizeJS (including everything that is or has
+been reachable from `atomize.root`), it can't undo other actions. Thus
 modifications of the DOM and other operations that cause side-effects
 should only be done from the continuation to the transaction
 function. Thus it's best practise to return values from the
 transaction that allow the continuation to figure out what it should
 be doing. The continuation is only run once, and only run once the
-transaction has successfully committed.
+transaction has successfully committed, so by that point, the result
+of the transaction function is stable.
