@@ -46,7 +46,7 @@ All these examples assume the following HTML template:
 <html>
 <head>
 <title>AtomizeJS Example</title>
-<script src="http://cdn.sockjs.org/sockjs-0.1.min.js"></script>
+<script type="text/javascript" src="http://cdn.sockjs.org/sockjs-0.1.min.js"></script>
 <script type="text/javascript" src="https://raw.github.com/atomizejs/cereal/master/lib/cereal.js"></script>
 <script type="text/javascript" src="https://raw.github.com/atomizejs/atomize-client/master/lib/atomize.js"></script>
 <script>
