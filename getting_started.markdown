@@ -117,6 +117,8 @@ This introduces quite a lot of concepts.
   the second client there, and thus will read the previously written
   date.
 
+### The importance of continuations
+
 It is easy to forget that the continuation-passing-style model is
 required. For example, you might be tempted to write the above code
 as:
@@ -160,3 +162,37 @@ transaction function had gone down the first branch, and thus assigned
 the `Wrote ...` result to the `result` variable. This is why it's
 important to use the continuation-passing-style whenever you need to
 depend on the transaction having committed successfully.
+
+### Avoiding side effects
+
+Equally, it's important to avoid doing things within a transaction
+which have *side-effects*. For example, if you rewrote this code as:
+
+    function start () {
+        atomize.atomically(function () {
+            if (atomize.root.x === undefined) {
+                atomize.root.x = Date.toString();
+                console.log("Wrote " + atomize.root.x);
+            } else {
+                var result = atomize.root.x;
+                delete atomize.root.x;
+                console.log("Read " + result);
+            }
+        });
+    }
+
+then on the second client to visit the page, you'll probably see two
+lines output on the console: the first being `Wrote ...` and the
+second being `Read ...`. The reason is the same as before, but this
+time, because we're doing the `console.log` *within* the transaction
+function, it will be run every time the transaction is run.
+
+Whilst a transaction that fails to commit undoes all the modifications
+of objects managed by AtomizeJS (i.e. everything that has been
+reachable from `atomize.root`), it can't undo other actions. Thus
+modifications of the DOM and other operations that cause side-effects
+should only be done from the continuation to the transaction
+function. Thus it's best practise to return values from the
+transaction that allow the continuation to figure out what it should
+be doing. The continuation is only run once, and only run once the
+transaction has successfully committed.
