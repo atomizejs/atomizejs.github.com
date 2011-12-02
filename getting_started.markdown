@@ -41,23 +41,25 @@ these to achieve fancy interactions with the DOM if you so wish.
 
 All these examples assume the following HTML template:
 
-    <!DOCTYPE html>
-    <html>
-    <head>
-    <title>AtomizeJS Example</title>
-    <script src="http://cdn.sockjs.org/sockjs-0.1.min.js"></script>
-    <script type="text/javascript" src="https://raw.github.com/atomizejs/cereal/master/lib/cereal.js"></script>
-    <script type="text/javascript" src="https://raw.github.com/atomizejs/atomize-client/master/lib/atomize.js"></script>
-    <script>
-    var atomize = new Atomize("http://localhost:9999/atomize");
-    
-    // rest of example goes here
-    
-    </script>
-    </head>
-    <body onload="start();">
-    </body>
-    </html>
+{% highlight html %}
+<!DOCTYPE html>
+<html>
+<head>
+<title>AtomizeJS Example</title>
+<script src="http://cdn.sockjs.org/sockjs-0.1.min.js"></script>
+<script type="text/javascript" src="https://raw.github.com/atomizejs/cereal/master/lib/cereal.js"></script>
+<script type="text/javascript" src="https://raw.github.com/atomizejs/atomize-client/master/lib/atomize.js"></script>
+<script>
+var atomize = new Atomize("http://localhost:9999/atomize");
+
+// rest of example goes here
+
+</script>
+</head>
+<body onload="start();">
+</body>
+</html>
+{% endhighlight %}
 
 As you can see, this assumes that the AtomizeJS server is running on
 `localhost` and listening on port 9999. If this is not the case, then
@@ -70,20 +72,22 @@ your browser directly at the HTML files directly on your machine
 
 # Writing and reading
 
-    function start () {
-        atomize.atomically(function () {
-            if (atomize.root.x === undefined) {
-                atomize.root.x = Date.toString();
-                return "Wrote " + atomize.root.x;
-            } else {
-                var result = atomize.root.x;
-                delete atomize.root.x;
-                return "Read " + result;
-            }
-        }, function (result) {
-            console.log(result);
-        });
-    }
+{% highlight javascript %}
+function start () {
+    atomize.atomically(function () {
+        if (atomize.root.x === undefined) {
+            atomize.root.x = Date.toString();
+            return "Wrote " + atomize.root.x;
+        } else {
+            var result = atomize.root.x;
+            delete atomize.root.x;
+            return "Read " + result;
+        }
+    }, function (result) {
+        console.log(result);
+    });
+}
+{% endhighlight %}
 
 This introduces quite a lot of concepts.
 
@@ -125,20 +129,22 @@ It is easy to forget that the continuation-passing-style model is
 required. For example, you might be tempted to write the above code
 as:
 
-    function start () {
-        var result;
-        atomize.atomically(function () {
-            if (atomize.root.x === undefined) {
-                atomize.root.x = Date.toString();
-                result = "Wrote " + atomize.root.x;
-            } else {
-                var result = atomize.root.x;
-                delete atomize.root.x;
-                result = "Read " + result;
-            }
-        });
-        console.log(result);
-    }
+{% highlight javascript %}
+function start () {
+    var result;
+    atomize.atomically(function () {
+        if (atomize.root.x === undefined) {
+            atomize.root.x = Date.toString();
+            result = "Wrote " + atomize.root.x;
+        } else {
+            var result = atomize.root.x;
+            delete atomize.root.x;
+            result = "Read " + result;
+        }
+    });
+    console.log(result);
+}
+{% endhighlight %}
 
 If you do this, what you'll most likely see is that every browser that
 visits the HTML page will log to its console `Wrote ...` and the
@@ -170,18 +176,20 @@ depend on the transaction having committed successfully.
 Equally, it's important to avoid doing things within a transaction
 which have *side-effects*. For example, if you rewrote this code as:
 
-    function start () {
-        atomize.atomically(function () {
-            if (atomize.root.x === undefined) {
-                atomize.root.x = Date.toString();
-                console.log("Wrote " + atomize.root.x);
-            } else {
-                var result = atomize.root.x;
-                delete atomize.root.x;
-                console.log("Read " + result);
-            }
-        });
-    }
+{% highlight javascript %}
+function start () {
+    atomize.atomically(function () {
+        if (atomize.root.x === undefined) {
+            atomize.root.x = Date.toString();
+            console.log("Wrote " + atomize.root.x);
+        } else {
+            var result = atomize.root.x;
+            delete atomize.root.x;
+            console.log("Read " + result);
+        }
+    });
+}
+{% endhighlight %}
 
 then on the second client to visit the page, you'll probably see two
 lines output on the console: the first being `Wrote ...` and the
@@ -211,21 +219,23 @@ special. However, if you assign an object, then you need to `lift` the
 object to ensure that AtomizeJS starts managing the object
 correctly. For example:
 
-    function start () {
-        atomize.atomically(function () {
-            if (atomize.root.x === undefined) {
-                atomize.root.x = atomize.lift({a: "hello"});
-                atomize.root.x.date = Date.toString();
-                return "Wrote " + atomize.root.x.date;
-            } else {
-                var result = atomize.root.x.date;
-                delete atomize.root.x;
-                return "Read " + result;
-            }
-        }, function (result) {
-            console.log(result);
-        });
-    }
+{% highlight html %}
+function start () {
+    atomize.atomically(function () {
+        if (atomize.root.x === undefined) {
+            atomize.root.x = atomize.lift({a: "hello"});
+            atomize.root.x.date = Date.toString();
+            return "Wrote " + atomize.root.x.date;
+        } else {
+            var result = atomize.root.x.date;
+            delete atomize.root.x;
+            return "Read " + result;
+        }
+    }, function (result) {
+        console.log(result);
+    });
+}
+{% endhighlight %}
 
 If you do not call `lift` then you'll get an error.
 
@@ -234,14 +244,16 @@ If you do not call `lift` then you'll get an error.
 Any call to `lift` will return an object that is managed by
 AtomizeJS. This need not be part of the `root` object. For example:
 
-    var myObj;
-    function start () {
-        atomize.atomically(function () {
-            return atomize.lift({});
-        }, function (obj) {
-            myObj = obj;
-        });
-    }
+{% highlight javascript %}
+var myObj;
+function start () {
+    atomize.atomically(function () {
+        return atomize.lift({});
+    }, function (obj) {
+        myObj = obj;
+    });
+}
+{% endhighlight %}
 
 `myObj` now contains an object that is managed by AtomizeJS. Of
 course, because it's not reachable from the `root` object, it won't
@@ -266,31 +278,33 @@ the values of variables we've read so far in the transaction have been
 changed. This avoids the need for spinning. This is the purpose of the
 `retry` operation. For example:
 
-    function start () {
-        if (Math.random() > 0.2) {
-            receive();
+{% highlight javascript %}
+function start () {
+    if (Math.random() > 0.2) {
+        receive();
+    } else {
+        send();
+    }
+}
+
+function receive () {
+    atomize.atomically(function () {
+        if (atomize.root.value === undefined) {
+            atomize.retry();
         } else {
-            send();
+            return "Received " + atomize.root.value;
         }
-    }
-    
-    function receive () {
-        atomize.atomically(function () {
-            if (atomize.root.value === undefined) {
-                atomize.retry();
-            } else {
-                return "Received " + atomize.root.value;
-            }
-        }, function (result) {
-            console.log(result);
-        });
-    }
-    
-    function send () {
-        atomize.atomically(function () {
-            atomize.root.value = Date().toString();
-        });
-    }
+    }, function (result) {
+        console.log(result);
+    });
+}
+
+function send () {
+    atomize.atomically(function () {
+        atomize.root.value = Date().toString();
+    });
+}
+{% endhighlight %}
 
 Try opening up several browser windows and pointing them all at the
 same HTML page.
@@ -334,54 +348,60 @@ the queue, where new values get added.
 
 First, we need to ensure we only have one writer:
 
-    var writer;
-    var nextValue = 0;
-    
-    function start() {
-        atomize.atomically(function () {
-            if (atomize.root.queue === undefined) {
-                atomize.root.queue = atomize.lift({
-                        next: atomize.lift({}),
-                        value: nextValue
-                    });
-                return true;
-            } else {
-                return false;
-            }
-        }, function (w) {
-            writer = w;
-            loop();
-        });
-    }
+{% highlight javascript %}
+var writer;
+var nextValue = 0;
+
+function start() {
+    atomize.atomically(function () {
+        if (atomize.root.queue === undefined) {
+            atomize.root.queue = atomize.lift({
+                    next: atomize.lift({}),
+                    value: nextValue
+                });
+            return true;
+        } else {
+            return false;
+        }
+    }, function (w) {
+        writer = w;
+        loop();
+    });
+}
+{% endhighlight %}
 
 By the end of this, the variable `writer` will contain `true` for just
 one client -- the client that arrived first. Now we need to set up the
 loop. We want to make sure this doesn't block the browser so we don't
 use a `while` loop or recursion. Instead, we use `setTimeout`:
 
-    function loop() {
-        if (writer) {
-            setTimeout("write();", 1);
-        } else {
-            setTimeout("read();", 1);
-        }
+{% highlight javascript %}
+function loop() {
+    if (writer) {
+        setTimeout("write();", 1);
+    } else {
+        setTimeout("read();", 1);
     }
+}
+{% endhighlight %}
 
 Now to write to the queue:
 
-    function write() {
-        nextValue += 1;
-        atomize.atomically(function () {
-            var cell = atomize.root.queue.next;
-            cell.next = atomize.lift({});
-            cell.value = nextValue;
-            atomize.root.queue = cell;
-            return cell.value;
-        }, function (value) {
-            console.log("Wrote " + value);
-            loop();
-        });
-    }
+{% highlight javascript %}
+function write() {
+    nextValue += 1;
+    atomize.atomically(function () {
+        var cell = atomize.root.queue.next;
+        cell.next = atomize.lift({});
+        cell.value = nextValue;
+        atomize.root.queue = cell;
+        return cell.value;
+    }, function (value) {
+        console.log("Wrote " + value);
+        loop();
+    });
+}
+{% endhighlight %}
 
 The *tail* of the queue will always contain a pointer to the `next`
 cell which will be empty. Thus we take the `next` cell, and populate
@@ -392,31 +412,33 @@ value.
 
 Now for reading:
 
-    var myPosition;
-    
-    function read() {
-        if (myPosition === undefined) {
-            atomize.atomically(function () {
-                if (myPosition === undefined) {
-                    myPosition = atomize.root.queue;
-                }
-            }, function () {
-                read();
-            });
-        } else {
-            atomize.atomically(function () {
-                if (myPosition.value === undefined) {
-                    atomize.retry();
-                } else {
-                    return {value: myPosition.value, next: myPosition.next};
-                }
-            }, function (result) {
-                myPosition = result.next;
-                console.log("Read " + result.value);
-                loop();
-            });
-        }
+{% highlight javascript %}
+var myPosition;
+
+function read() {
+    if (myPosition === undefined) {
+        atomize.atomically(function () {
+            if (myPosition === undefined) {
+                myPosition = atomize.root.queue;
+            }
+        }, function () {
+            read();
+        });
+    } else {
+        atomize.atomically(function () {
+            if (myPosition.value === undefined) {
+                atomize.retry();
+            } else {
+                return {value: myPosition.value, next: myPosition.next};
+            }
+        }, function (result) {
+            myPosition = result.next;
+            console.log("Read " + result.value);
+            loop();
+        });
     }
+}
+{% endhighlight %}
 
 First, we have to populate the `myPosition` variable with the cell at
 the current tail of the queue, which we do in a separate
