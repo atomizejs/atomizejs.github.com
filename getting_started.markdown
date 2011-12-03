@@ -67,8 +67,8 @@ please adjust this template as required.
 
 None of these examples need to be *served* by a web-server: provided
 you have the AtomizeJS server running as described above, pointing
-your browser directly at the HTML files directly on your machine
-(i.e. with a `file:///...` URL) will work perfectly well.
+your browser directly at the HTML files on your machine (i.e. with a
+`file:///...` URL) will work perfectly well.
 
 # Writing and reading
 
@@ -89,7 +89,7 @@ function start() {
 }
 {% endhighlight %}
 
-This introduces quite a lot of concepts.
+This introduces quite a few concepts.
 
 1. The `atomize.atomically` function takes two arguments.
     1. The first argument is the function that is run as a
@@ -109,19 +109,19 @@ This introduces quite a lot of concepts.
   to all clients using this AtomizeJS server. The initial value of the
   `atomize.root` object is the empty object, `{}`.
 3. The same transaction has different behaviours depending on what it
-  finds. If the client is the first client there, then it will find
-  that the `x` property is `undefined`. It will then assign to the `x`
-  property, and return, thus completing the transaction. The second
-  client will find that the `x` property is defined, and so will go
-  into the other branch of the `if` statement.
+  finds. If the client is the first client to run the transaction,
+  then it will find that the `x` property is `undefined`. It will then
+  assign to the `x` property, and return, thus completing the
+  transaction. The second client will find that the `x` property is
+  defined, and so will go into the other branch of the `if` statement.
 4. State continues to exist in the server even if clients leave. If
   you start the AtomizeJS server, then point a client at this HTML
-  page, that client will be the first client there, and will write the
-  current date to the `x` property of the `root` object. The effect of
-  this transaction exists on the server. Thus even if you shut your
-  browser down and restart it, when you next visit the page, you'll be
-  the second client there, and thus will read the previously written
-  date.
+  page, then that client will be the first client to run the
+  transaction, and will write the current date to the `x` property of
+  the `root` object. The effect of this transaction exists on the
+  server. Thus even if you shut your browser down and restart it, when
+  you next visit the page, you'll be the second client there, and thus
+  will read the previously written date.
 
 ## The importance of continuations
 
@@ -314,14 +314,15 @@ function. If there is no value to receive then it will be suspended,
 and only woken up and restarted once the variables that it has read so
 far (in this case, just the `root` object) are modified.
 
-Eventually, one of the clients will enter the `send` function, and
-will write to the `value` property of the `root` object. At this
-point, all the other clients, waiting in the `receive` transaction,
-will have their transaction function restarted. The second time
-through this receive transaction, the clients will see the newly
-written `value` property. This time, they'll not go into the `retry`
-branch of the `if` statement, and instead will receive the result and
-complete the transaction. We've just built a broadcast mechanism.
+As you start more browsers, eventually one of them will enter the
+`send` function, and will write to the `value` property of the `root`
+object. At this point, all the other clients, waiting in the `receive`
+transaction, will have their transaction function restarted. The
+second time through this receive transaction, the clients will see the
+newly written `value` property. This time, they'll not go into the
+`retry` branch of the `if` statement, and instead will receive the
+result and complete the transaction. We've just built a broadcast
+mechanism.
 
 Whilst the `retry` operation suspends the current transaction, it too
 does not block. Thus as before, it's important to use

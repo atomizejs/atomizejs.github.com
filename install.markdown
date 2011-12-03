@@ -13,9 +13,9 @@ AtomizeJS is made up of several components:
     * [cereal.js](https://github.com/atomizejs/cereal/blob/master/lib/cereal.js)
     * [atomize.js](https://github.com/atomizejs/atomize-client/blob/master/lib/atomize.js)
 
-* Server. Currently, the only AtomizeJS server is written in
-  JavaScript for NodeJS. You should be able to install it with nothing
-  more than `npm install atomize-server`.
+* Server. Currently, the AtomizeJS server is written in JavaScript for
+  NodeJS. You should be able to install it with nothing more than `npm
+  install atomize-server`.
 
 
 # Repositories

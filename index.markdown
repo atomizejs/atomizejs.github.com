@@ -6,10 +6,10 @@ title: Home
 # Introduction
 
 Writing concurrent programs is tricky. Languages tend to go down one
-of two routes: either threads are allowed to access directly the same
-data-structures, and it's left up to the programmer to decide how to
-manage locking; or the language presents a model whereby each thread
-has its own specific memory, and data is passed between threads
+of two routes: either threads are allowed to access the same
+data-structures directly, and it's left up to the programmer to decide
+how to manage locking; or the language presents a model whereby each
+thread has its own specific memory, and data is passed between threads
 through message passing. The former approach gives the programmer a
 slightly bigger gun to shoot themselves with: the ease of writing code
 that deadlocks is unrivalled. The latter is conceptually much simpler
@@ -94,5 +94,5 @@ AtomizeJS also supports nested transactions.
 On the server, a NodeJS server can also be a client to itself running
 the AtomizeJS server. This means that you can, when you need or want
 to, write server side JavaScript that also uses AtomizeJS to safely
-modify global state that is shared with clients. There no API changes
-at all.
+modify global state that is shared with clients. There are no API
+changes at all.
