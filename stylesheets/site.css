@@ -18,7 +18,7 @@
 #container
 {
         float: right;
-        margin: 0 auto;
+        margin: 0 0 20px 0;
         padding: 0;
         width: 720px;
         border: 1px solid #79ccf5;
