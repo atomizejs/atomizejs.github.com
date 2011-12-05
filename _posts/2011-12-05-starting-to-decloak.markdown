@@ -49,5 +49,26 @@ There is also much work to be done on:
   imagine needing private objects amongst different clients and the
   server.
 
+* Libraries: AtomizeJS and STM in general provide some neat
+  primitives. These are fairly low-level, but can be usefully combined
+  to create more powerful patterns, for example the broadcast queue in
+  the [getting started](/getting_started.html) guide. We should create
+  a set of libraries which capture many of these higher-level
+  patterns.
+
 * Optimisations: There are many optimisations that could be done both
   client and server side.
+
+* Alternative servers: There's no reason why the server should just be
+  implemented in NodeJS. For performance reasons, it might be a good
+  idea to have other implementations in other languages.
+
+At this stage, any and all [feedback](/contact.html) is very
+welcome. We know that right now, without broader browser support, few
+of you are going to start building your next world-changing
+application on top of AtomizeJS. However, for the early-adopters out
+there and everyone who's keen to have a play around and a quick read,
+we'd love to know what you think of the project as a whole, how easy
+you find it to write applications on AtomizeJS, whether you think the
+APIs make sense and so forth. Please [get in touch](/contact.html)
+with any thoughts you have.
