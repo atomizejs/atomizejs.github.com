@@ -120,14 +120,14 @@ atomize.atomically(function () {
 * Two arguments:
     1. A list of transaction functions
     2. A continuation
-* The initial *current transaction function* is the function at index
+* The initial *current-transaction-function* is the function at index
   0 of the list
-* If the *current transaction function* does not `retry` then it
+* If the *current-transaction-function* does not `retry` then it
   commits as normal, and the continuation is invoked as normal
-* If the *current transaction function* hits `retry` then the *writes*
-  of the *current transaction function* are undone and the *current
-  transaction function* is now the next transaction function in the
-  list. The new *current transaction function* is then invoked
+* If the *current-transaction-function* hits `retry` then the *writes*
+  of the *current-transaction-function* are undone and the
+  *current-transaction-function* is now the next transaction function
+  in the list. The new *current-transaction-function* is then invoked
 * If all transaction functions `retry`, then a normal `retry` is
   issued for *all* objects read across all transaction functions
 
