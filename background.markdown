@@ -36,34 +36,35 @@ and *isolated* properties.
 Manual locks are notorious for being difficult to get right. If you
 use many locks (fine-grained locking) where each lock is used to
 protect a small data-structure then obtaining all the locks in such a
-way as to avoid potentially causing deadlocks can be tricky. If you
+way as to avoid potentially causing a deadlock can be tricky. If you
 have few locks (coarse-grained locking) then whilst it's much easier
 to avoid deadlock, you run the risk of losing available parallelism
 because each lock protects too large a data-structure.
 
 STM avoids the programmer having to take any locks explicitly at
-all. Instead, in a transaction, the STM engine is either told
-explicitly which data-structures are being accessed (Boost.STM does
-this) or is able to infer it (either by the type-system, as with the
-Haskell implementation; or at run-time by proxies and other
-techniques, as with AtomizeJS). Dereferencing counts as a *read* of an
-object (so `a.x` is a *read* of object `a`); assignment counts as a
-*write* (so `a.x = y` is a *write* to object `a`). In the code example:
+all. Instead, in a transaction, the STM engine is either directly told
+which data-structures are being accessed (Boost.STM does this) or is
+able to infer it (either by the type-system, as with the Haskell
+implementation; or at run-time by proxies and other techniques, as
+with AtomizeJS). Dereferencing counts as a *read* of an object (so
+`a.x` is a *read* of object `a`); assignment counts as a *write* (so
+`a.x = y` is a *write* to object `a`). For example:
 
 {% highlight javascript %}
 if (root.calendar.dayOfMonth === 1 && root.calendar.month === "January") {
-    root.login.motd = "Happy New Year!";
+    root.global.login.motd = "Happy New Year!";
 }
 {% endhighlight %}
 
-Then we have a *read set* of at least `root` and `root.calendar`. If
-it did happen to be the 1st of January, then we would further add to
-the *read set* `root.login`, and we would have a *write set* of
-`root.login`. Note that we do not have `root.calendar.dayOfMonth` in
-the *read set*: we did not try and inspect any children of
-`dayOfMonth`. (Equally, if you assign to `root.calendar.dayOfMonth`
-then the *write set* would include `root.calendar`, not
-`root.calendar.dayOfMonth`, and so the reads and writes match).
+Here, we have a *read set* of at least `root` and `root.calendar`. If
+it did happen to be the 1st of January, then we would further *add* to
+the *read set* `root.global`, and we would have a *write set* of
+`root.global.login`. Note that we do not have
+`root.calendar.dayOfMonth` in the *read set*: we did not try and
+inspect any children of `dayOfMonth`. (Equally, if you assign to
+`root.calendar.dayOfMonth` then the *write set* would include
+`root.calendar`, not `root.calendar.dayOfMonth`, and so the reads and
+writes match.)
 
 ## AtomizeJS
 
