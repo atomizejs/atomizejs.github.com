@@ -36,6 +36,8 @@
         color: #000000;
 }
 
+#header a:hover { text-decoration: underline; }
+
 #header h1 { margin: 0; }
 
 #navigation
