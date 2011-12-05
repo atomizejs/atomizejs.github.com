@@ -20,7 +20,8 @@ framework, only to
 are currently actively used and developed implementations of STM for
 the [C++ Boost library](http://eces.colorado.edu/~gottschl/dracoSTM/)
 and for
-[Haskell](http://research.microsoft.com/pubs/67418/2005-ppopp-composable.pdf).
+[Haskell](http://research.microsoft.com/pubs/67418/2005-ppopp-composable.pdf)
+amongst others.
 
 STM is primarily aimed at trying to ease the difficulties of writing
 large-scale concurrent programmes. In concurrent programmes, where
