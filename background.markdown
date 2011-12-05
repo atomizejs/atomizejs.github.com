@@ -25,8 +25,8 @@ amongst others.
 
 STM is primarily aimed at trying to ease the difficulties of writing
 large-scale concurrent programs. In concurrent programs, where
-multi-threaded access is required to the same data-structures, locking
-is typically used to ensure multiple threads can't proceed through
+concurrent access is required to the same data-structures, locking is
+typically used to ensure multiple threads can't proceed through
 *critical regions* concurrently. If multiple threads were to progress
 through *critical regions* at the same time, they may be able to see
 the partial progress and intermediate states caused by other
