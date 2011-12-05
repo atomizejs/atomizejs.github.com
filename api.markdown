@@ -9,7 +9,7 @@ Please also see the [Getting Started](/getting_started.html) page.
 
 ## Server
 
-### `create`
+### - `create`
 
 * Create a new AtomizeJS server
 * Two parameters:
@@ -32,7 +32,7 @@ Note that with the exception of the constructor, the complete client
 API is available in the NodeJS server as shown above under the
 `atomizeServer.atomize` field.
 
-### `Atomize` constructor
+### - `Atomize` constructor
 
 * Browser-side only
 * Creates a new atomize client
@@ -43,14 +43,14 @@ API is available in the NodeJS server as shown above under the
 var atomize = new Atomize("http://localhost:9999/atomize");
 {% endhighlight %}
 
-### `root`
+### - `root`
 
 * The `root` object
 * All objects and values reachable from the root object are available
   to all clients
 * The initial value is the empty object `{}`
 
-### `atomically`
+### - `atomically`
 
 * Runs a transaction function
 * Two arguments:
@@ -70,7 +70,7 @@ atomize.atomically(function () {
 });
 {% endhighlight %}
 
-### `lift`
+### - `lift`
 
 * Prepares an object for management by the AtomizeJS system
 * One argument: the object to be managed
@@ -89,7 +89,7 @@ atomize.atomically(function () {
 }, function () {});
 {% endhighlight %}
 
-### `retry`
+### - `retry`
 
 * Indicates the transaction wishes to be suspended pending some change
 * No arguments
@@ -113,7 +113,7 @@ atomize.atomically(function () {
 });
 {% endhighlight %}
 
-### `orElse`
+### - `orElse`
 
 * An abstraction of `retry`
 * Two arguments:
