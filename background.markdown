@@ -81,21 +81,22 @@ transaction log is just thrown away and nothing else needs doing.
 
 When the transaction function completes, the transaction log contains
 the net effect of the transaction function. This log needs to be
-verified and committed. Every object is versioned. The log captures
-the version of every object that has been read or written to. This
-information is then passed to the server which tests to see whether
-the server-copy of those objects really are at the versions the client
-used, or whether some other client has modified any of the objects,
-and thus changed the version numbers. If there are any discrepancies
-between the version numbers in the transaction log and on the server
-then the client is sent updates for the objects for which it holds
-out-of-date copies, and is then told to restart the
-transaction. Eventually, the transaction will be performed against the
-current values of all relevant objects, the server will verify this,
-the server will apply the writes from the transaction log to its
-copies of those objects, and bump the version number, and will confirm
-the commit back to the client which will similarly apply the writes
-the real objects, and bump the version numbers.
+verified and committed. Every object is versioned, and the log
+captures the version of every object that has been read or written
+to. This information is then passed to the server which tests to see
+whether the server-copy of those objects is the same version as the
+client used, or whether some other client has modified any of the
+objects in the meantime, and thus changed the version numbers. If
+there are any discrepancies between the version numbers in the
+transaction log and on the server then the client is sent updates for
+the objects for which it holds out-of-date copies, and is then told to
+restart the transaction. Eventually, the transaction will be performed
+against the current values of all relevant objects, the server will
+verify this and will then apply the writes from the transaction log to
+its copies of those objects, and bump the version numbers. It will
+then confirm the commit back to the client which will similarly apply
+the writes the real objects and bump its version numbers. Finally, the
+client will invoke the transaction function continuation.
 
 Currently, because the server is implemented simply in NodeJS, there
 is no concurrency on the server. As such, no locks need to be
