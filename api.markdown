@@ -93,6 +93,7 @@ atomize.atomically(function () {
 
 * Indicates the transaction wishes to be suspended pending some change
 * No arguments
+* Upon retry, the effects of the transaction function are undone
 * The transaction will be restarted when the values the transaction
   read prior to the `retry` have been modified
 
@@ -123,11 +124,12 @@ atomize.atomically(function () {
   0 of the list
 * If the *current transaction function* does not `retry` then it
   commits as normal, and the continuation is invoked as normal
-* If the *current transaction function* hits `retry` then the *current
-  transaction function* = the next transaction function in the list,
-  and is immediately invoked
-* If all transaction functions `retry` then a normal `retry` is issued
-  for *all* objects read across all transaction functions
+* If the *current transaction function* hits `retry` then the effects
+  of the *current transaction function* are undone and *current
+  transaction function* is now the next transaction function in the
+  list. The new *current transaction function* is then invoked
+* If all transaction functions `retry`, then a normal `retry` is
+  issued for *all* objects read across all transaction functions
 
 In the following example, at most one of the transaction functions
 will commit. If both retry, then the overall `orElse` operation will
