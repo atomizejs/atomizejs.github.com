@@ -79,21 +79,21 @@
 {
         color: #000000;
         font-size: 160%;
-        margin: 0 0 .5em;
+        margin: 30px 0 0 0;
 }
 
 #content h2
 {
         color: #000000;
         font-size: 130%;
-        margin: .5em 0 .5em;
+        margin: 25px 0 0 0;
 }
 
 #content h3
 {
         color: #000000;
         font-size: 110%;
-        margin: 1em 0 .5em;
+        margin: 15px 0 0 0;
 }
 
 #footer
