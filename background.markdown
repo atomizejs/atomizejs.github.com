@@ -24,7 +24,7 @@ and for
 amongst others.
 
 STM is primarily aimed at trying to ease the difficulties of writing
-large-scale concurrent programmes. In concurrent programmes, where
+large-scale concurrent programs. In concurrent programs, where
 multi-threaded access is required to the same data-structures, locking
 is typically used to ensure multiple threads can't proceed through
 *critical regions* concurrently. If multiple threads were to progress
@@ -131,14 +131,14 @@ the reasons, amongst others, that
 However, when these limitations are understood (and indeed, if you
 think about what you would expect to be possible if you were manually
 using locks then it's all rather obvious), STM is a very useful and
-valuable technology that does make writing concurrent programmes
-easier: the STM engine is able to detect collisions and the
-finest-grained level and, experiments have shown that with concurrent
-implementations of the engine, are able to perform extremely well. In
-the case of AtomizeJS, whilst the current server is not
-multi-threaded, clients still perform the transaction functions in
-parallel before sending the transaction log to the server. Thus it's
-still possible to see how parallel execution can happen.
+valuable technology that does make writing concurrent programs easier:
+the STM engine is able to detect collisions and the finest-grained
+level and, experiments have shown that with concurrent implementations
+of the engine, are able to perform extremely well. In the case of
+AtomizeJS, whilst the current server is not multi-threaded, clients
+still perform the transaction functions in parallel before sending the
+transaction log to the server. Thus it's still possible to see how
+parallel execution can happen.
 
 We believe the AtomizeJS STM engine, in combination with the
 distribution of objects to clients in a safe way (i.e. respecting the
