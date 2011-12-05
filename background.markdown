@@ -93,10 +93,11 @@ the objects for which it holds out-of-date copies, and is then told to
 restart the transaction. Eventually, the transaction will be performed
 against the current values of all relevant objects, the server will
 verify this and will then apply the writes from the transaction log to
-its copies of those objects, and bump the version numbers. It will
+its copies of those objects, and bump their version numbers. It will
 then confirm the commit back to the client which will similarly apply
-the writes the real objects and bump its version numbers. Finally, the
-client will invoke the transaction function continuation.
+the writes to the real objects and bump those version
+numbers. Finally, the client will invoke the transaction function
+continuation.
 
 Currently, because the server is implemented simply in NodeJS, there
 is no concurrency on the server. As such, no locks need to be
@@ -135,13 +136,13 @@ However, when these limitations are understood (and indeed, if you
 think about what you would expect to be possible if you were manually
 using locks then it's all rather obvious), STM is a very useful and
 valuable technology that does make writing concurrent programs easier:
-the STM engine is able to detect collisions and the finest-grained
+the STM engine is able to detect collisions at the finest-grained
 level and, experiments have shown that with concurrent implementations
-of the engine, are able to perform extremely well. In the case of
+of the engine, is able to perform extremely well. In the case of
 AtomizeJS, whilst the current server is not multi-threaded, clients
 still perform the transaction functions in parallel before sending the
 transaction log to the server. Thus it's still possible to see how
-parallel execution can happen.
+parallel execution can occur.
 
 We believe the AtomizeJS STM engine, in combination with the
 distribution of objects to clients in a safe way (i.e. respecting the
