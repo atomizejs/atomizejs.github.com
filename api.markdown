@@ -124,7 +124,7 @@ atomize.atomically(function () {
   0 of the list
 * If the *current transaction function* does not `retry` then it
   commits as normal, and the continuation is invoked as normal
-* If the *current transaction function* hits `retry` then the effects
+* If the *current transaction function* hits `retry` then the *writes*
   of the *current transaction function* are undone and the *current
   transaction function* is now the next transaction function in the
   list. The new *current transaction function* is then invoked
