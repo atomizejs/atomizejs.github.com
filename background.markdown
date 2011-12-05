@@ -65,6 +65,8 @@ the *read set*: we did not try and inspect any children of
 then the *write set* would include `root.calendar`, not
 `root.calendar.dayOfMonth`, and so the reads and writes match).
 
+## AtomizeJS
+
 There are then several ways to implement STM. What follows is an
 outline of how AtomizeJS works. This is not dissimilar to other
 implementations.
