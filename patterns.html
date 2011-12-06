@@ -45,9 +45,9 @@ Player.prototype = {
     },
 
     watch: function () {
-        var fun, self;
+        var self, watcher;
         self = this;
-        fun = function (pos) {
+        watcher = function (pos) {
             atomize.atomically(function () {
                 if (pos.x === self.raw.x && pos.y === self.raw.y) {
                     atomize.retry();
@@ -57,10 +57,10 @@ Player.prototype = {
             }, function (pos) {
                 self.x = pos.x;
                 self.y = pos.y;
-                fun(pos);
+                watcher(pos);
             }
         };
-        fun({x: this.x, y: this.y});
+        watcher({x: this.x, y: this.y});
     }
 };
 {% endhighlight %}
@@ -192,9 +192,9 @@ Tree.prototype = {
     },
 
     watch: function () {
-        var self, fun;
+        var self, watcher;
         self = this;
-        fun = function (eventCount) {
+        watcher = function (eventCount) {
             atomize.atomically(function () {
                 if (eventCount === self.raw.eventCount) {
                     atomize.retry();
@@ -204,10 +204,10 @@ Tree.prototype = {
                 }
             }, function (copy) {
                 self.copy = copy.tree;
-                fun(copy.eventCount);
+                watcher(copy.eventCount);
             });
         };
-        fun(undefined);
+        watcher(undefined);
     }
 };
 {% endhighlight %}
