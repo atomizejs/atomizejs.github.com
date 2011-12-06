@@ -135,7 +135,12 @@ pre
     padding: 2px;
 }
 
-h1 a
+#content h1 a:link
+{
+    color: #000000;
+}
+
+#content h1 a:visited
 {
     color: #000000;
 }
@@ -145,7 +150,7 @@ a
     text-decoration: none;
 }
 
-container a:link
+#content a:link
 {
     color: #008dd7;
 }
@@ -155,7 +160,7 @@ a:hover
     text-decoration: underline;
 }
 
-container a:visited
+#content a:visited
 {
     color: #0707ff;
 }
