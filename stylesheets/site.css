@@ -150,7 +150,7 @@ container a:link
     color: #008dd7;
 }
 
-container a:hover
+a:hover
 {
     text-decoration: underline;
 }
