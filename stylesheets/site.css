@@ -145,17 +145,17 @@ a
     text-decoration: none;
 }
 
-a:link
+container a:link
 {
     color: #008dd7;
 }
 
-a:hover
+container a:hover
 {
     text-decoration: underline;
 }
 
-a:visited
+container a:visited
 {
     color: #0707ff;
 }
