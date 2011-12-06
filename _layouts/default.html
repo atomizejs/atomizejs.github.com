@@ -2,7 +2,7 @@
 layout: page
 ---
 
-{% capture api %}
+{% capture mdlinks %}
 
 [`create`]: /api.html#create
 [`root`]: /api.html#root
@@ -33,4 +33,4 @@ layout: page
 
 {% endcapture %}
 
-{{ content | append:api | markdownify }}
+{{ content | append:mdlinks | markdownify }}
