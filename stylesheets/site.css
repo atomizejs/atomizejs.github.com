@@ -52,7 +52,7 @@
     float: left;
     width: 720px;
     background: #008dd7;
-    font-size: 90%;
+    font-size: 85%;
 }
 
 #navigation ul
@@ -79,7 +79,7 @@
 
 #navigation li a:hover
 {
-    background: #474ee4;
+    background: #0707ff;
 }
 
 #content
@@ -145,7 +145,17 @@ a
     text-decoration: none;
 }
 
+a:link
+{
+    color: #008dd7;
+}
+
 a:hover
 {
     text-decoration: underline;
+}
+
+a:visited
+{
+    color: #0707ff;
 }
