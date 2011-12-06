@@ -336,9 +336,9 @@ Here, if `pos.y` is even, then the whole transaction suspends, waiting
 for someone else to modify `pos.y`, *before* either continuation is
 run, or `text` gets set to `"goodbye"`. Given our previous *proxy*
 objects which started up the *watcher* from within the constructor, if
-created such an object from within another transaction, you'll find
-the parent transaction blocks as the child transaction in the new
-object has hit the [`retry`][].
+such an object were to be created from within another transaction,
+you'd find the parent transaction blocks as the child transaction in
+the new object has hit the [`retry`][].
 
 In the future, we may be able to add other mechanisms which help to
 manage these scenarios.
