@@ -1,0 +1,344 @@
+---
+layout: default
+title: Patterns
+---
+
+# Patterns and Practices
+
+In some ways, STM may seem instantly familiar to people who are used
+to the properties of transactions from database worlds: the *atomic*,
+*consistent* and *isolated* properties are exactly the same, and the
+only difference is the lack of the *durable* property as the AtomizeJS
+server does not write anything to disk (though you could easily
+imagine a future version which does).
+
+In other ways, STM is quite different from normal database
+transactions: database transactions have nothing like the [`retry`][]
+or [`orElse`][] operations. Instead, well featured relational
+databases tend to add `trigger` features so that upon changes to rows
+or tables, user functions can be automatically invoked. Both
+approaches allow an *observer-pattern* or *event-driven callbacks* to
+be created, though the STM approach is simpler and more intuitive.
+
+## Eventing
+
+By using [`retry`][], you can build neat *proxy* objects. This also
+gets around the current limitation of [`lift`][] whereby lifting an
+object with a custom constructor and prototype will lose the prototype
+when the object arrives at other clients. For example, consider a
+`Player` which has an `x` and `y` coordinate and a `name`:
+
+{% highlight javascript %}
+function Player(name, x, y) {
+    this.raw = atomize.lift({name: name});
+    this.setPos(x, y);
+    this.watch();
+}
+
+Player.prototype = {
+    setPos: function (x, y) {
+        var self = this;
+        atomize.atomically(function () {
+            self.raw.x = x;
+            self.raw.y = y;
+        });
+    },
+
+    watch: function () {
+        var fun, self;
+        self = this;
+        fun = function (pos) {
+            atomize.atomically(function () {
+                if (pos.x === self.raw.x && pos.y === self.raw.y) {
+                    atomize.retry();
+                } else {
+                    return {x: self.raw.x, y: self.raw.y}
+                }
+            }, function (pos) {
+                self.x = pos.x;
+                self.y = pos.y;
+                fun(pos);
+            }
+        };
+        fun({x: this.x, y: this.y});
+    }
+};
+{% endhighlight %}
+
+There is a fair amount of boiler-plate here, and it should be clear
+how this can be abstracted out to a general proxy mechanism, but as a
+simple example it demonstrates the following:
+
+* We rely on the the *watcher* to observe any change in the underlying
+  `raw` object that is managed by AtomizeJS.
+* When we want to set the position, we just perform a transaction that
+  modifies the `raw` object and allow the watcher to be notified and
+  propagate the change back to the proxy object.
+* It's always safe to read the `x` and `y` fields of the proxy object:
+  as they're only updated by the *watcher* they will only ever see
+  values that have been fully committed by other transactions.
+* The watcher never finishes.
+
+Possibly one surprising aspect of this design though is that `setPos`
+is non-blocking. This can mean that if you perform:
+
+{% highlight javascript %}
+var player = new Player("Fred", 45, 12);
+player.setPos(46, 12);
+player.setPos(46, 13);
+{% endhighlight %}
+
+then the two transactions you've issued can commit in *either* order!
+To avoid that there are two choices: either you just ignore any calls
+to `setPos` whilst a transaction is in-flight:
+
+{% highlight javascript %}
+    setPos: function (x, y) {
+        if (this.blocked) {
+            return;
+        }
+        this.blocked = true;
+        var self = this;
+        atomize.atomically(function () {
+            self.raw.x = x;
+            self.raw.y = y;
+        }, function () {
+            delete self.blocked;
+        });
+    },
+{% endhighlight %}
+
+Or, you convert the whole mechanism to a continuation-passing style:
+
+{% highlight javascript %}
+    setPos: function (x, y, cont) {
+        var self = this;
+        atomize.atomically(function () {
+            self.raw.x = x;
+            self.raw.y = y;
+        }, cont);
+    },
+{% endhighlight %}
+
+but then you'll have to do things like:
+
+{% highlight javascript %}
+var player = new Player("Fred", 45, 12);
+player.setPos(46, 12,
+    function () {
+        player.setPos(46, 13, function () {});
+    });
+{% endhighlight %}
+
+and in fact, you'll note the `Player` constructor calls `setPos`, so
+that will likely want a continuation too.
+
+The former approach is much simpler, but will work only when you can
+afford to lose updates: for example when you have a regular *tick*
+coming from a timer that will reissue the same or similar `setPos`
+call a little later on, hopefully after the transaction commits.
+
+## Sharing deep data-structures
+
+As explained in the [background][] page, the statement `a.b.c.d =
+e.f;` creates a read-set of `a`, `a.b` and `e`, and a write set of
+`c`. If you created a transaction which inspected `a` and then chose
+to [`retry`][], then it would not be restarted by this assignment
+because `a` has not been changed.
+
+So if you consider a deep data-structure such as a binary tree, then
+it's clear that just [`retry`][]-ing after inspecting the root of the
+binary tree will not allow you to be informed of all changes to the
+tree. There are two choices: either inspect *every* node of the tree,
+and retry only after reading every single node, which would be very
+expensive if the tree is deep, or create some other simpler mechanism
+which ensures that every change does cause a retried transaction to
+restart.
+
+One simple way of doing this is to have an *eventCount*. Assume that
+we have the functions `tree_new`, `tree_search`, `tree_insert`,
+`tree_remove` and `tree_deep_clone`. We could then wrap them:
+
+{% highlight javascript %}
+function Tree (raw) {
+    if (raw === undefined) {
+        this.raw = atomize.lift({eventCount: 1, tree: tree_new()});
+    } else {
+        this.raw = raw;
+    }
+    this.copy = tree_new();
+    this.watch();
+}
+
+Tree.prototype = {
+    insert: function (key, val) {
+        var self = this;
+        atomize.atomically(function () {
+            self.raw.eventCount += 1;
+            self.raw.tree = tree_insert(self.raw.tree, key, val);
+        });
+    },
+
+    remove: function (key) {
+        var self = this;
+        atomize.atomically(function () {
+            self.raw.eventCount += 1;
+            self.raw.tree = tree_remove(self.raw.tree, key);
+        });
+    },
+
+    search: function (key) {
+        return tree_search(this.copy, key);
+    },
+
+    watch: function () {
+        var self, fun;
+        self = this;
+        fun = function (eventCount) {
+            atomize.atomically(function () {
+                if (eventCount === self.raw.eventCount) {
+                    atomize.retry();
+                } else {
+                    return {eventCount: self.raw.eventCount,
+                            tree: tree_deep_clone(self.raw.tree)};
+                }
+            }, function (copy) {
+                self.copy = copy.tree;
+                fun(copy.eventCount);
+            });
+        };
+        fun(undefined);
+    }
+};
+{% endhighlight %}
+
+Again, we build a proxy type object which is constantly being update
+from the raw tree object in AtomizeJS. But by ensuring that every
+mutating operation also changes the *eventCount* field, it becomes
+trivial to ensure that we get notified whenever the tree is changed.
+
+## Nested transactions
+
+AtomizeJS supports nested transactions. When an *inner* transaction
+commits, all that happens is that its *read* and *write* sets get
+copied into its parent's transaction log. For example:
+
+{% highlight javascript %}
+function foo () {
+    atomize.atomically(function () {
+        atomize.root.pos = atomize.lift({x: 5, y: 6});
+        atomize.root.text = "hello";
+        bar();
+        atomize.root.text = "goodbye";
+        return atomize.root.text;
+    }, function (text) {
+        console.log("foo continuation:" + text);
+    });
+}
+
+function bar () {
+    atomize.atomically(function () {
+        if (atomize.root.pos.y % 2 === 0) {
+            atomize.root.pos.y + 1;
+        }
+        atomize.root.pos.x + 1;
+        return atomize.root.text;
+    }, function (text) {
+        console.log("bar continuation: " + text);
+    });
+}
+{% endhighlight %}
+
+As usual, the `bar` continuation gets run after the `bar` transaction
+commits. But when the `bar` transaction commits, you're still in the
+`foo` transaction. Thus the `bar` continuation gets run *inside* the
+`foo` transaction. In this case, at the point of the `bar`
+continuation running, the value of `text` will be `"hello"`. If the
+`foo` transaction has to be restarted then the `bar` transaction will
+also be restarted, which can lead to the `bar` continuation running
+multiple times.
+
+To detect this scenario, there is the [`inTransaction`][] API call
+which is always safe to call, and will let you detect, for example
+when in a continuation, whether or not you are still in a transaction.
+
+One way to ensure that a provided continuation is only ever run once
+you're outside a transaction would be:
+
+{% highlight javascript %}
+function foo (cont) {
+    atomize.atomically(function () {
+        atomize.root.pos = atomize.lift({x: 5, y: 6});
+        atomize.root.text = "hello";
+        bar(cont);
+        atomize.root.text = "goodbye";
+        return atomize.root.text;
+    }, maybeCont(cont));
+}
+
+function bar (cont) {
+    atomize.atomically(function () {
+        if (atomize.root.pos.y % 2 === 0) {
+            atomize.root.pos.y + 1;
+        }
+        atomize.root.pos.x + 1;
+        return atomize.root.text;
+    }, maybeCont(cont));
+}
+
+function maybeCont(cont) {
+    return function (result) {
+        if (atomize.inTransaction()) {
+            return cont(result);
+        } else {
+            return result;
+        }
+    };
+}
+{% endhighlight %}
+
+Thus now, regardless of how `bar` is invoked (i.e. whether directly or
+whether from `foo`), the continuation will only be invoked once
+outside of all transactions.
+
+It's also worth watching out for nested transactions where the inner
+transaction calls [`retry`][]: this will block the parent transaction
+too. For example:
+
+
+{% highlight javascript %}
+function foo () {
+    atomize.atomically(function () {
+        atomize.root.pos = atomize.lift({x: 5, y: 6});
+        atomize.root.text = "hello";
+        bar();
+        atomize.root.text = "goodbye";
+        return atomize.root.text;
+    }, function (text) {
+        console.log("foo continuation:" + text);
+    });
+}
+
+function bar () {
+    atomize.atomically(function () {
+        if (atomize.root.pos.y % 2 === 0) {
+            atomize.retry();
+        }
+        atomize.root.pos.x + 1;
+        return atomize.root.text;
+    }, function (text) {
+        console.log("bar continuation: " + text);
+    });
+}
+{% endhighlight %}
+
+Here, if `pos.y` is even, then the whole transaction suspends, waiting
+for someone else to modify `pos.y`, *before* either continuation is
+run, or `text` gets set to `"goodbye"`. Given our previous *proxy*
+objects which started up the *watcher* from within the constructor, if
+created such an object from within another transaction, you'll find
+the parent transaction blocks as the child transaction in the new
+object has hit the [`retry`][].
+
+In the future, we may be able to add other mechanisms which help to
+manage these scenarios.

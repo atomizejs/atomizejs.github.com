@@ -239,7 +239,12 @@ function start() {
 }
 {% endhighlight %}
 
-If you do not call [`lift`][] then you'll get an error.
+If you do not call [`lift`][] then you'll get an error. Please note
+that currently, if you [`lift`][] in an object that has a non-default
+`prototype` then the prototype does not get recreated by other
+clients: the other clients will just see an object with a prototype of
+`Object.prototype`. Additionally, only plain `Objects` and `Arrays`
+are supported: trying to lift a `Function` will not work.
 
 ## Objects outside of [`root`][]
 

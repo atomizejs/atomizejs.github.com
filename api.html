@@ -94,6 +94,11 @@ atomize.atomically(function () {
   primitives
 * Idempotent: calling lift on the same object multiple times will
   return the same managed AtomizeJS object
+* It is safe to use lift outside of a transaction: this is because
+  when used outside of a transaction, it implicitly creates and
+  commits a function which merely passes the object through to the
+  AtomizeJS server. This can't possibly fail, so you do not need to
+  consider the possibility of such a trasaction retrying
 
 {% highlight javascript %}
 atomize.atomically(function () {
@@ -102,6 +107,12 @@ atomize.atomically(function () {
     atomize.root.obj.b = atomize.lift(6);
 }, function () {});
 {% endhighlight %}
+
+Please note that currently, if you [`lift`][] in an object that has a
+non-default `prototype` then the prototype does not get recreated by
+other clients: the other clients will just see an object with a
+prototype of `Object.prototype`. Additionally, only plain `Objects`
+and `Arrays` are supported: trying to lift a `Function` will not work.
 
 
 <div id="retry"></div>
@@ -177,3 +188,11 @@ atomize.orElse(
          console.log(result);
      });
 {% endhighlight %}
+
+
+<div id="inTransaction"></div>
+### - `inTransaction()`
+
+* Returns `true` if currently in a transaction and `false` otherwise
+* No arguments
+* Can be called both inside and outside a transaction
