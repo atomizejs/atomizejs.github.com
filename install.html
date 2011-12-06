@@ -34,11 +34,8 @@ AtomizeJS is made up of several components:
 
 AtomizeJS is currently still very alpha, and depends on some
 bleeding-edge features of JavaScript. In particular, it depends on
-[WeakMaps](http://wiki.ecmascript.org/doku.php?id=harmony:weak_maps)
-and more crucially
-[Proxies](http://wiki.ecmascript.org/doku.php?id=harmony:proxies)
-(which are soon to be replaced by
-[Direct-Proxies](http://wiki.ecmascript.org/doku.php?id=harmony:direct_proxies)).
+[WeakMaps][] and more crucially [Proxies][] (which are soon to be
+replaced by [Direct-Proxies][]).
 
 ## Client Requirements
 
@@ -49,15 +46,14 @@ and more crucially
 
 ## Server Requirements
 
-Currently, the only AtomizeJS server requires
-[NodeJS](http://nodejs.org/). NodeJS uses the
-[V8 JavaScript engine](http://code.google.com/p/v8/). Currently, no
-released version of NodeJS comes with a sufficiently recent version of
-V8. Thus to prepare NodeJS, please follow these steps:
+Currently, the only AtomizeJS server requires [NodeJS][]. NodeJS uses
+the [V8 JavaScript engine][V8]. Currently, no released version of
+NodeJS comes with a sufficiently recent version of V8. Thus to prepare
+NodeJS, please follow these steps:
 
-1. Install the latest [V8](http://code.google.com/p/v8/). You need at
-least version 3.7. If you're on Debian/Ubuntu then the easiest route
-is to grab and install the packages from
+1. Install the latest [V8][]. You need at least version 3.7. If you're
+on Debian/Ubuntu then the easiest route is to grab and install the
+packages from
 [this PPA](https://launchpad.net/~ilya-novoselov/+archive/hemi/+packages).
 2. Download the latest [NodeJS](http://nodejs.org/#download) source.
 3. Unpack it.

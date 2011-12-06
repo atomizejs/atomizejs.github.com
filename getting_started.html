@@ -6,9 +6,9 @@ title: Getting Started
 # Server
 
 For these first examples, we shall write no server code and just use a
-plain AtomizeJS server. See the [install](/install.html) guide for
-acquiring the libraries. Once you've done that, you just need to put
-the following boiler-plate in a file (call it `app.js`):
+plain AtomizeJS server. See the [install][] guide for acquiring the
+libraries. Once you've done that, you just need to put the following
+boiler-plate in a file (call it `app.js`):
 
 {% highlight javascript %}
 var http = require('http');
@@ -91,7 +91,8 @@ function start() {
 
 This introduces quite a few concepts.
 
-1. The `atomize.atomically` function takes two arguments.
+1. The [`atomize.atomically`][`atomically`] function takes two
+arguments.
     1. The first argument is the function that is run as a
       transaction, atomically. This function may run more than once:
       if it is found to have read or written data which has in the
@@ -103,11 +104,12 @@ This introduces quite a few concepts.
       the transaction successfully commits, and is passed any result
       returned from the transaction function. This function will only
       be run at most once.
-2. `atomize.root` is the root of the distributed object
+2. [`atomize.root`][`root`] is the root of the distributed object
   graph. Assigning values to properties and objects beneath the
-  `atomize.root` object will ensure that those values are distributed
-  to all clients using this AtomizeJS server. The initial value of the
-  `atomize.root` object is the empty object, `{}`.
+  [`atomize.root`][`root`] object will ensure that those values are
+  distributed to all clients using this AtomizeJS server. The initial
+  value of the [`atomize.root`][`root`] object is the empty object,
+  `{}`.
 3. The same transaction has different behaviours depending on what it
   finds. If the client is the first client to run the transaction,
   then it will find that the `x` property is `undefined`. It will then
@@ -118,7 +120,7 @@ This introduces quite a few concepts.
   you start the AtomizeJS server, then point a client at this HTML
   page, then that client will be the first client to run the
   transaction, and will write the current date to the `x` property of
-  the `root` object. The effect of this transaction exists on the
+  the [`root`][] object. The effect of this transaction exists on the
   server. Thus even if you shut your browser down and restart it, when
   you next visit the page, you'll be the second client there, and thus
   will read the previously written date.
@@ -155,7 +157,7 @@ branch of the `if` statement. It is only when the second client tries
 to commit the effects of the transaction that it'll find out from the
 AtomizeJS server that it ran the transaction function on out-of-date
 data. At that point, the second client will be sent the most
-up-to-date version of the `root` object, which will have the `x`
+up-to-date version of the [`root`][] object, which will have the `x`
 property set, and the transaction function will be restarted.
 
 But the communication from the client to the AtomizeJS server is
@@ -201,22 +203,22 @@ will occur every time the transaction function is run.
 
 Whilst a transaction that fails to commit undoes all the modifications
 of objects managed by AtomizeJS (including everything that is or has
-been reachable from `atomize.root`), it can't undo other actions. Thus
-modifications of the DOM and other operations that cause side-effects
-should only be done from the continuation to the transaction
-function. Thus it's best practise to return values from the
-transaction that allow the continuation to figure out what it should
-be doing. The continuation is only run once, and only run once the
-transaction has successfully committed, so by that point, the result
-of the transaction function is stable.
+been reachable from [`atomize.root`][`root`]), it can't undo other
+actions. Thus modifications of the DOM and other operations that cause
+side-effects should only be done from the continuation to the
+transaction function. Thus it's best practise to return values from
+the transaction that allow the continuation to figure out what it
+should be doing. The continuation is only run once, and only run once
+the transaction has successfully committed, so by that point, the
+result of the transaction function is stable.
 
 ## Writing Objects and Primitives
 
-So far, we have written only primitive values into the `root` object
-graph. When you assign a primitive value (i.e. a boolean, a string, a
-number or `undefined`), you don't need to do anything
-special. However, if you assign an object, then you need to `lift` the
-object to ensure that AtomizeJS starts managing the object
+So far, we have written only primitive values into the [`root`][]
+object graph. When you assign a primitive value (i.e. a boolean, a
+string, a number or `undefined`), you don't need to do anything
+special. However, if you assign an object, then you need to [`lift`][]
+the object to ensure that AtomizeJS starts managing the object
 correctly. For example:
 
 {% highlight javascript %}
@@ -237,12 +239,13 @@ function start() {
 }
 {% endhighlight %}
 
-If you do not call `lift` then you'll get an error.
+If you do not call [`lift`][] then you'll get an error.
 
-## Objects outside of `root`
+## Objects outside of [`root`][]
 
-Any call to `lift` will return an object that is managed by
-AtomizeJS. This need not be part of the `root` object. For example:
+Any call to [`lift`][] will return an object that is managed by
+AtomizeJS. This need not be part of the [`root`][] object. For
+example:
 
 {% highlight javascript %}
 var myObj;
@@ -256,27 +259,28 @@ function start() {
 {% endhighlight %}
 
 `myObj` now contains an object that is managed by AtomizeJS. Of
-course, because it's not reachable from the `root` object, it won't
-get distributed to other clients. But, for example, we can take
-objects that were reachable from the `root` object, and hold on to
-them, even if later on, they get detached from the `root` object. We
-can use this to build a broadcast queue...
+course, because it's not reachable from the [`root`][] object, it
+won't get distributed to other clients. But, for example, we can take
+objects that were reachable from the [`root`][] object, and hold on to
+them, even if later on, they get detached from the [`root`][]
+object. We can use this to build a broadcast queue...
 
 
 # Building communication
 
 So far, we've seen how you can build transactions that act on what
-they find in the `root` object, and can modify properties and values
-within the `root` object. For communication between different parties,
-you need *sending* operations and *receiving* operations. In our case,
-*sending* is very simple: it's just writing to a known location within
-the `root` object. For *receiving*, we'd like to avoid *spinning*: if
-no new value has been written for us to receive, we don't want to be
-constantly restarting the transaction. Instead, we want the AtomizeJS
-system to remember the transaction, and automatically restart it when
-the values of variables we've read so far in the transaction have been
-changed. This avoids the need for spinning. This is the purpose of the
-`retry` operation. For example:
+they find in the [`root`][] object, and can modify properties and
+values within the [`root`][] object. For communication between
+different parties, you need *sending* operations and *receiving*
+operations. In our case, *sending* is very simple: it's just writing
+to a known location within the [`root`][] object. For *receiving*,
+we'd like to avoid *spinning*: if no new value has been written for us
+to receive, we don't want to be constantly restarting the
+transaction. Instead, we want the AtomizeJS system to remember the
+transaction, and automatically restart it when the values of variables
+we've read so far in the transaction have been changed. This avoids
+the need for spinning. This is the purpose of the [`retry`][]
+operation. For example:
 
 {% highlight javascript %}
 function start() {
@@ -312,20 +316,20 @@ same HTML page.
 Here, we have an 80% chance that a new client will enter the `receive`
 function. If there is no value to receive then it will be suspended,
 and only woken up and restarted once the variables that it has read so
-far (in this case, just the `root` object) are modified.
+far (in this case, just the [`root`][] object) are modified.
 
 As you start more browsers, eventually one of them will enter the
-`send` function, and will write to the `value` property of the `root`
-object. At this point, all the other clients, waiting in the `receive`
-transaction, will have their transaction function restarted. The
-second time through this receive transaction, the clients will see the
-newly written `value` property. This time, they'll not go into the
-`retry` branch of the `if` statement, and instead will receive the
-result and complete the transaction. We've just built a broadcast
-mechanism.
+`send` function, and will write to the `value` property of the
+[`root`][] object. At this point, all the other clients, waiting in
+the `receive` transaction, will have their transaction function
+restarted. The second time through this receive transaction, the
+clients will see the newly written `value` property. This time,
+they'll not go into the [`retry`][] branch of the `if` statement, and
+instead will receive the result and complete the transaction. We've
+just built a broadcast mechanism.
 
-Whilst the `retry` operation suspends the current transaction, it too
-does not block. Thus as before, it's important to use
+Whilst the [`retry`][] operation suspends the current transaction, it
+too does not block. Thus as before, it's important to use
 continuation-passing-style when you need to run code after the
 transaction has finally completed.
 
@@ -336,10 +340,10 @@ writer which constantly adds new values to the end of the queue. Every
 reader will receive every value that was added *after* the client
 connected. All clients can work at their own pace.
 
-This example makes use of `retry` and the fact that you can take
-objects out of the `root` object graph and they're still managed by
-AtomizeJS: this is how each client maintains its own position into the
-queue.
+This example makes use of [`retry`][] and the fact that you can take
+objects out of the [`root`][] object graph and they're still managed
+by AtomizeJS: this is how each client maintains its own position into
+the queue.
 
 The queue that we construct is going to be a standard
 linked-list. Each *cell* has a property `value` (containing the value
@@ -448,7 +452,7 @@ have a `value` property, and once it does, we grab that value, and
 then update our position to the next cell in the linked list. This
 way, we don't rely on keeping up with the writer. The value of
 `myPosition` is an object that is managed by AtomizeJS: it was created
-by a call to `lift` in `write`. If the writer goes faster than the
+by a call to [`lift`][] in `write`. If the writer goes faster than the
 reader then the value of `myPosition` will differ from
 `atomize.root.queue`, but that's ok: the reader will always be able to
 follow the links and walk the chain to the tail of the queue.

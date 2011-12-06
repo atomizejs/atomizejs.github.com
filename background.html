@@ -56,10 +56,10 @@ if (root.calendar.dayOfMonth === 1 && root.calendar.month === "January") {
 }
 {% endhighlight %}
 
-Here, we have a *read set* of at least `root` and `root.calendar`. If
-it did happen to be the 1st of January, then we would further *add* to
-the *read set* `root.global`, and we would have a *write set* of
-`root.global.login`. Note that we do not have
+Here, we have a *read set* of at least [`root`][] and
+`root.calendar`. If it did happen to be the 1st of January, then we
+would further *add* to the *read set* `root.global`, and we would have
+a *write set* of `root.global.login`. Note that we do not have
 `root.calendar.dayOfMonth` in the *read set*: we did not try and
 inspect any children of `dayOfMonth`. (Equally, if you assign to
 `root.calendar.dayOfMonth` then the *write set* would include
@@ -109,12 +109,12 @@ to would need to be taken.
 ## Limitations
 
 The key attraction of STM is that you don't need to think about which
-locks to take: you can just write a function, pass it to `atomically`
-and expect it to be run with all the correct properties. Provided the
-function *only* accesses and manipulates data-structures which are
-controlled by the STM engine, this is indeed true: the transaction log
-will capture all reads and writes as required, and the transaction
-will be managed correctly.
+locks to take: you can just write a function, pass it to
+[`atomically`][] and expect it to be run with all the correct
+properties. Provided the function *only* accesses and manipulates
+data-structures which are controlled by the STM engine, this is indeed
+true: the transaction log will capture all reads and writes as
+required, and the transaction will be managed correctly.
 
 However, if the transaction function manipulates objects outside of
 STM engine, or performs other operations which have side effects (such

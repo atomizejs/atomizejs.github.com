@@ -1,38 +1,36 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-  <title>AtomizeJS - {{ page.title }}</title>
-  <link rel="stylesheet" href="/stylesheets/site.css" type="text/css" media="screen, projection, tv" />
-  <link rel="stylesheet" href="/stylesheets/highlight.css" type="text/css" media="screen, projection, tv" />
-</head>
+---
+layout: page
+---
 
-<body>
+{% capture api %}
 
-<div id="outer">
-  <div id="logo"></div>
-  <div id="container">
-    <div id="header">
-      <h1><a href="/">AtomizeJS</a></h1>
-      <div class="box"><em>A Distributed Software Transactional Memory implementation in JavaScript</em></div>
-    </div>
+[`create`]: /api.html#create
+[`root`]: /api.html#root
+[`atomically`]: /api.html#atomically
+[`lift`]: /api.html#lift
+[`retry`]: /api.html#retry
+[`orElse`]: /api.html#orElse
 
-    <div id="navigation">
-      <ul>
-        <li><a href="/install.html">Install</a></li>
-        <li><a href="/getting_started.html">Getting Started</a></li>
-        <li><a href="/api.html">API</a></li>
-        <li><a href="/background.html">Background</a></li>
-        <li><a href="/contact.html">Contact</a></li>
-        <li><a href="/blog.html">Blog</a></li>
-      </ul>
-    </div>
+[home]: /index.html
+[index]: /index.html
+[install]: /install.html
+[getting started]: /getting_started.html
+[API]: /api.html
+[background]: /background.html
+[contact]: /contact.html
+[blog]: /blog.html
 
-    <div id="content">
-      {{ content }}
-    </div>
-  </div>
-</div>
+[WeakMaps]: http://wiki.ecmascript.org/doku.php?id=harmony:weak_maps
+[Proxies]: http://wiki.ecmascript.org/doku.php?id=harmony:proxies
+[Direct-Proxies]: http://wiki.ecmascript.org/doku.php?id=harmony:direct_proxies
 
-</body>
-</html>
+[NodeJS]: http://nodejs.org/
+[V8]: http://code.google.com/p/v8/
+
+[email]: mailto://atomizejs@rabbitmq.com
+[github-org]: https://github.com/atomizejs/
+[twitter]: https://twitter.com/atomizejs
+
+{% endcapture %}
+
+{{ content | append:api | markdownify }}

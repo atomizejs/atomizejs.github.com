@@ -2,7 +2,7 @@
 layout: default
 ---
 
-<h1><a href="{{ page.url }}">{{ page.title }}</a></h1>
-<h3>{{ page.date | date: "%A %d %B %Y" }}</h3>
+# [{{ page.title }}]({{ page.url }})
+### {{ page.date | date: "%A %d %B %Y" }}
 
 {{ content }}

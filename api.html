@@ -3,12 +3,16 @@ layout: default
 title: API
 ---
 
-Please also see the [Getting Started](/getting_started.html) page.
+Please also see the [getting started][] page.
 
 # API
 
+
+<div id="server"></div>
 ## Server
 
+
+<div id="create"></div>
 ### - `create(server, path)`
 
 * Create a new AtomizeJS server
@@ -26,12 +30,16 @@ server.listen(port, '0.0.0.0');
 var atomizeClient = atomizeServer.atomize;
 {% endhighlight %}
 
+
+<div id="client"></div>
 ## Client
 
 Note that with the exception of the constructor, the complete client
 API is available in the NodeJS server as shown above under the
 `atomizeServer.atomize` field.
 
+
+<div id="constructor"></div>
 ### - `Atomize(URL)` constructor
 
 * Browser-side only
@@ -43,6 +51,8 @@ API is available in the NodeJS server as shown above under the
 var atomize = new Atomize("http://localhost:9999/atomize");
 {% endhighlight %}
 
+
+<div id="root"></div>
 ### - `root`
 
 * The `root` object
@@ -50,6 +60,8 @@ var atomize = new Atomize("http://localhost:9999/atomize");
   to all clients
 * The initial value is the empty object `{}`
 
+
+<div id="atomically"></div>
 ### - `atomically(txnFun, contFun)`
 
 * Runs a transaction function
@@ -70,6 +82,8 @@ atomize.atomically(function () {
 });
 {% endhighlight %}
 
+
+<div id="lift"></div>
 ### - `lift(obj)`
 
 * Prepares an object for management by the AtomizeJS system
@@ -89,6 +103,8 @@ atomize.atomically(function () {
 }, function () {});
 {% endhighlight %}
 
+
+<div id="retry"></div>
 ### - `retry()`
 
 * Indicates the transaction wishes to be suspended pending some change
@@ -114,6 +130,8 @@ atomize.atomically(function () {
 });
 {% endhighlight %}
 
+
+<div id="orElse"></div>
 ### - `orElse(txnFuns, contFun)`
 
 * An abstraction of `retry`
@@ -136,7 +154,7 @@ will commit. If both retry, then the overall `orElse` operation will
 be restarted once any of the objects read by both transaction
 functions have changed (in this case, the complete *read set* is
 `atomize.root`, `atomize.root.a`, `atomize.root.b`; please see the
-[background](/background.html) page for more details on *read sets*).
+[background][] page for more details on *read sets*).
 
 {% highlight javascript %}
 atomize.orElse(

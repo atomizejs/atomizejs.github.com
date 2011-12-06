@@ -4,8 +4,8 @@ title: Blog
 ---
 
 {% for item in site.posts %}
-<h1><a href="{{ item.url }}">{{ item.title }}</a></h1>
-<h3>{{ item.date | date: "%A %d %B %Y" }}</h3>
+#<a href="{{ item.url }}">{{ item.title }}</a>
+###{{ item.date | date: "%A %d %B %Y" }}
 
 {{ item.content }}
 {% endfor %}
