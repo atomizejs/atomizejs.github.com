@@ -55,7 +55,10 @@ The mental model you should have when using AtomizeJS is as follows:
 Transactions cannot deadlock: when a transaction function is run,
 AtomizeJS detects if other transactions have modified the same objects
 that are being altered by this function. If so, this function is
-automatically restarted with the updated current state-of-the-world.
+automatically restarted with the updated current
+state-of-the-world. If a transaction is restarted then it will be
+because some other transaction has committed, thus the system as a
+whole has made progress.
 
 Transactions allow programmers to safely manipulate data-structures
 shared between many threads, or in the case of AtomizeJS, clients
@@ -95,8 +98,8 @@ been read as part of the transaction have been changed.
 
 AtomizeJS also supports nested transactions.
 
-On the server, a NodeJS server can also be a client to itself running
-the AtomizeJS server. This means that you can, when you need or want
-to, write server side JavaScript that also uses AtomizeJS to safely
-modify global state that is shared with clients. There are no API
-changes at all.
+On the server, a NodeJS server can also be a client to the AtomizeJS
+system. This means that you can, when you need or want to, write
+server side JavaScript that also uses AtomizeJS to safely modify
+global state that is shared with clients. There are no API changes at
+all.

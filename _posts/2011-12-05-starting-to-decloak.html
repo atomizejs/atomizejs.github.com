@@ -7,9 +7,9 @@ Under 1 man-month of development done; AtomizeJS is public, but there
 is much to do. The most major limitation is that of browser support:
 currently only Firefox 8 and Chrome 17 are supported. This is because
 they support experimental features of the next version of JavaScript
-which we depend upon. We have some ideas about how to support other
-browsers and doing this is our first priority, but it's not the only
-thing on our to-do list.
+which AtomizeJS currently depends upon. I have some ideas about how to
+support other browsers and doing this is my first priority, but it's
+not the only thing on my to-do list.
 
 There is also much work to be done on:
 
@@ -38,23 +38,22 @@ There is also much work to be done on:
   applications.
 
 * Security and partitioning: the focus of AtomizeJS is to make it
-  easier to move more and more logic to the browser side. However,
-  there are always going to be applications which need to have some
-  server-side component. One of the likely important areas here is to
-  provide a means whereby the server can control which clients can
-  read and write to which variables. Currently there is no security at
-  all: any client can write and read to and from any object managed by
-  AtomizeJS (provided they can get hold of it in the first place -
-  objects do not have to be reachable via [`root`][]). It's easy to
-  imagine needing private objects amongst different clients and the
-  server.
+  easier to move more and more application logic to the browser
+  side. However, there are always going to be applications which need
+  to have some server-side component. One of the likely important
+  areas here is to provide a means whereby the server can control
+  which clients can read and write to which variables. Currently there
+  is no security at all: any client can write and read to and from any
+  object managed by AtomizeJS (provided they can get hold of it in the
+  first place - objects do not have to be reachable via
+  [`root`][]). It's easy to imagine needing private objects amongst
+  different clients and the server.
 
 * Libraries: AtomizeJS and STM in general provide some neat
   primitives. These are fairly low-level, but can be usefully combined
   to create more powerful patterns, for example the broadcast queue in
-  the [getting started][] guide. We should create
-  a set of libraries which capture many of these higher-level
-  patterns.
+  the [getting started][] guide. I plan to create a set of libraries
+  which capture many of these higher-level patterns.
 
 * Optimisations: There are many optimisations that could be done both
   client and server side.
@@ -63,12 +62,12 @@ There is also much work to be done on:
   implemented in NodeJS. For performance reasons, it might be a good
   idea to have other implementations in other languages.
 
-At this stage, any and all [feedback][contact] is very welcome. We
-know that right now, without broader browser support, few of you are
-going to start building your next world-changing application on top of
-AtomizeJS. However, for the early-adopters out there and everyone
-who's keen to have a play around and a quick read, we'd love to know
-what you think of the project as a whole, how easy you find it to
-write applications on AtomizeJS, whether you think the APIs make sense
-and so forth. Please [get in touch][contact] with any thoughts you
-have.
+At this stage, any and all [feedback][contact] is very welcome. I
+realise that right now, without broader browser support, few of you
+are going to start building your next world-changing application on
+top of AtomizeJS. However, for the early-adopters out there and
+everyone who's keen to have a play around and a quick read, I'd love
+to know what you think of the project as a whole, how easy you find it
+to write applications on AtomizeJS, whether you think the APIs make
+sense and so forth. Please [get in touch][contact] with any thoughts
+you have.

@@ -123,6 +123,8 @@ and `Arrays` are supported: trying to lift a `Function` will not work.
 * Upon retry, the effects of the transaction function are undone
 * The transaction will be restarted when the values the transaction
   read prior to the `retry` have been modified
+* Note that no statements that directly follow a [`retry`][] will ever
+  be invoked: they are dead code
 
 In the following example, the continuation will *only* be invoked with
 a value `!== undefined`:

@@ -334,9 +334,13 @@ instead will receive the result and complete the transaction. We've
 just built a broadcast mechanism.
 
 Whilst the [`retry`][] operation suspends the current transaction, it
-too does not block. Thus as before, it's important to use
+too does not block (i.e. the client's thread of execution will leave
+the outer-most [`atomically`][] invocation and continue with
+subsequent statements). Thus as before, it's important to use
 continuation-passing-style when you need to run code after the
-transaction has finally completed.
+transaction has finally completed. Note that no statements that
+directly follow a [`retry`][] will ever be invoked: they are dead
+code.
 
 ## A broadcast queue
 

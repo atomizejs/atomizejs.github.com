@@ -3,7 +3,10 @@ layout: default
 title: Installation
 ---
 
-# Components
+# Installing AtomizeJS
+
+
+## Components
 
 AtomizeJS is made up of several components:
 
@@ -18,7 +21,7 @@ AtomizeJS is made up of several components:
   install atomize-server`.
 
 
-# Repositories
+## Repositories
 
 * [atomize-server-node](https://github.com/atomizejs/atomize-server-node):
   The NodeJS server. This itself depends on atomize-client, cereal and
@@ -31,21 +34,22 @@ AtomizeJS is made up of several components:
 * [atomize-examples](https://github.com/atomizejs/atomize-examples):
   Some examples and tests for AtomizeJS.
 
-# Requirements
+
+## Requirements
 
 AtomizeJS is currently still very alpha, and depends on some
 bleeding-edge features of JavaScript. In particular, it depends on
 [WeakMaps][] and more crucially [Proxies][] (which are soon to be
 replaced by [Direct-Proxies][]).
 
-## Client Requirements
+### Client Requirements
 
 * The only web browsers known to work currently are Firefox 8, or
   Chrome 17.
 * If you are using Chrome, then you need to start Chrome as:
   `google-chrome --js-flags="--harmony-proxies --harmony-collections"`
 
-## Server Requirements
+### Server Requirements
 
 Currently, the only AtomizeJS server requires [NodeJS][]. NodeJS uses
 the [V8 JavaScript engine][V8]. Currently, no released version of
