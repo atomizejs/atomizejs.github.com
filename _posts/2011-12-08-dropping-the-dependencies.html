@@ -1,0 +1,53 @@
+---
+layout: post
+title: Dropping the dependencies
+---
+
+One of my highest priorities right now is to increase browser
+compatibility. Supporting IE6 probably isn't going to happen, and even
+IE7 is unlikely. IE8 would certainly be a nice to have given that as
+of July 2011, about 60% of IE users are using IE8, though that will
+change. I'd really love to avoid having to write different versions of
+JavaScript for different browsers, but we shall see...
+
+First up is getting rid of the dependency on [WeakMaps][] or Maps in
+general. Simple
+[Maps and Sets](http://wiki.ecmascript.org/doku.php?id=harmony:simple_maps_and_sets)
+are due to be in the next version of JavaScript. Without them, you
+have problems telling the difference between certain types of key,
+because when you do a plain `obj[key] = val`, the field name created
+is just the string representation of `key`. Thus `1` and `"1"` are the
+same thing, and every object is `[object Object]` - hardly very
+useful. I need objects as keys.
+
+This one I've managed to work around: I've managed to build an
+implementation of a Map. Inevitably, it's a compromise, and it ends up
+storing a unique ID in every object it touches. Currently, it does
+that via `defineProperty` (in order to make it non-deletable,
+non-rewritable and non-enumerable) which is broken in IE8, but I hope
+to be able to work around that.
+
+The much bigger problem is working around the lack of [Proxies][] in
+older browsers. Initially, I'll have to build the API out so that you
+can drive the proxy manually. This will mean that instead of writing
+code like `a.b.c = x.y` you'll have to write code like
+`a.get('b').set('c', x.get('y'))`. Yup, it's pretty grim, and I doubt
+that'll be the worst of it. I'm hoping to have some sort of mechanised
+translation, but seeing as you can write
+
+{% highlight javascript %}
+function MyFun (f) {
+    atomize.atomically(f);
+}
+{% endhighlight %}
+
+you're either going to have to do dynamic translation of any `f` that
+arrives there (which is problematic because there's no standard way of
+getting hold of the source of `f` - `.toSource()` is not standard), or
+you're going to have to do whole program analysis in advance and
+really prepare two different versions of every function and then
+select at run time which version to run based on whether or not you're
+inside a transaction. I've not made up my mind which one I prefer -
+[comments welcome][contact] - but the first step will be to build out
+the proxy API so that these things can be driven manually, even if the
+syntax is pretty ugly.
