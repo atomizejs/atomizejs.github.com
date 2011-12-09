@@ -42,12 +42,13 @@ function MyFun (f) {
 {% endhighlight %}
 
 you're either going to have to do dynamic translation of any `f` that
-arrives there (which is problematic because there's no standard way of
-getting hold of the source of `f` - `.toSource()` is not standard), or
-you're going to have to do whole program analysis in advance and
-really prepare two different versions of every function and then
-select at run time which version to run based on whether or not you're
-inside a transaction. I've not made up my mind which one I prefer -
+arrives there (which is OK to a point - `f.toString()` should give you
+the source code of `f` (which I could then parse, build an AST,
+analyse and rewrite), *unless* it's a browser built-in), or you're
+going to have to do whole program analysis in advance and really
+prepare two different versions of every function and then select at
+run time which version to run based on whether or not you're inside a
+transaction. I've not made up my mind which one I prefer -
 [comments welcome][contact] - but the first step will be to build out
 the proxy API so that these things can be driven manually, even if the
 syntax is pretty ugly.
