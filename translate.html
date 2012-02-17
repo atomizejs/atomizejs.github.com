@@ -1,0 +1,63 @@
+---
+layout: default
+title: Translation Tool
+---
+
+# Translation Tool
+
+For browsers that do not yet support JavaScript [Proxies][] (soon to
+be [Direct-Proxies][]), code that is run within an AtomizeJS
+transaction must be translated. AtomizeJS comes with a translation
+tool which does this.
+
+After doing an `npm install atomize-client`, you should find `npm` has
+installed an `atomize-translate` binary.
+
+# Usage
+
+`atomize-translate` *`input`* *`output`* *`atomizeVar`* [*`ignore`*...]
+
+* `input`: The path to the input file. The input file must be a pure
+  JavaScript file, not be an HTML file with JavaScript embedded.
+* `output`: The path to the output file.
+* `atomizeVar`: The name of the `atomize` variable, i.e. variable to
+  which the result `new Atomize(URL)` is assigned. A limitation of
+  using the translation tool is that it is assumed this variable is
+  both global, and that only one AtomizeJS server is ever connected to
+  at any one time.
+* [`ignore`...]: Names of variables that should be excluded from
+  translation. This list always implicitly contains the `atomizeVar`
+  and `this`.
+
+The tool should be run on any JavaScript file that contains code that
+can be reached from within an AtomizeJS transaction. For example, if
+you have the code in `ball.js.raw`:
+
+{% highlight javascript %}
+var server = new Atomize("http://localhost:9999/atomize");
+
+function Ball (x, y) {
+    this.x = x;
+    this.y = y;
+    this.raw = server.lift({x: x, y: y});
+}
+
+Ball.prototype = {
+    bounce: function () {
+        server.atomically(function () {
+            this.raw.y = -this.raw.y;
+        }, function (y) {
+            this.y = y;
+        });
+    }
+};
+{% endhighlight %}
+
+Then you should run the translation tool as
+    atomize-translate ball.js.raw ball.js server Ball
+
+This will ensure that the `Ball` object itself is left untouched, even
+though the functions within it will be translated correctly. However,
+if in the transaction you manipulated the global `Ball` object itself
+(rather than an instance of the `Ball` object) then it would be wrong
+to have `Ball` in the ignored list.

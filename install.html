@@ -37,23 +37,41 @@ AtomizeJS is made up of several components:
 
 ## Requirements
 
-AtomizeJS is currently still very alpha, and depends on some
-bleeding-edge features of JavaScript. In particular, it depends on
-[Proxies][] (which are soon to be replaced by [Direct-Proxies][]).
-
 ### Client Requirements
 
-* The only web browsers known to work currently are Firefox 8, or
-  Chrome 17.
-* If you are using Chrome, then you need to start Chrome as:
-  `google-chrome --js-flags="--harmony-proxies --harmony-collections"`
+AtomizeJS is currently still fairly alpha, but does work on Chrome
+(not sure what's the earliest version it works with, but 17 onwards is
+fine), Firefox (again, anything fairly recent should be fine), Safari
+(5.1 is fine, not sure about earlier versions), Internet Explorer 9,
+and Opera (11.6 is fine).
+
+For browsers which support bleeding edge features of the JavaScript
+Harmony project (i.e. Chrome 17 or better or Firefox 8 or better),
+AtomizeJS can take advantage of those features directly. For other
+browsers, there's a tool provided that does a JavaScript
+[translation][translate] so that older browsers can work with
+AtomizeJS.
+
+#### Optional
+
+If you are using Chrome 17 or better, **and** wish to take advantage
+of newer experimental JavaScript features wiht AtomizeJS, then you
+need to start Chrome as: `google-chrome --js-flags="--harmony"`
 
 ### Server Requirements
 
 Currently, the only AtomizeJS server requires [NodeJS][]. NodeJS uses
-the [V8 JavaScript engine][V8]. Currently, no released version of
-NodeJS comes with a sufficiently recent version of V8. Thus to prepare
-NodeJS, please follow these steps:
+the [V8 JavaScript engine][V8]. Using the default version of [V8][]
+that comes with [NodeJS][] is fine, and will work, but will require
+you use the [translation tool][translate] if you write server-side
+transactions with AtomizeJS.
+
+#### Optional
+
+As with Chrome, **if** you want to use the experimental features of
+JavaScript directly with AtomizeJS on the [NodeJS][] server side, and
+thus avoid using the [translation tool][translate], then you'll need
+to prepare NodeJS with a more recent version of V8:
 
 1. Install the latest [V8][]. You need at least version 3.7. If you're
 on Debian/Ubuntu then the easiest route is to grab and install the

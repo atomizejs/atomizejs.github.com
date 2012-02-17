@@ -26,6 +26,11 @@ server.listen(port, '0.0.0.0');
 {% endhighlight %}
 
 Then start up NodeJS with
+    node app.js
+
+As mentioned in the [install][] guide, if you wish to use experimental
+features of JavaScript, and have prepared a version of NodeJS
+correctly, then you'll instead start up NodeJS as
     node --harmony-collections --harmony-proxies app.js
 
 This will create a server listening on port 9999 that will provide
@@ -48,32 +53,42 @@ All these examples assume the following HTML template:
 <title>AtomizeJS Example</title>
 <script type="text/javascript" src="http://cdn.sockjs.org/sockjs-0.1.min.js"></script>
 <script type="text/javascript" src="https://raw.github.com/atomizejs/cereal/master/lib/cereal.js"></script>
+<script type="text/javascript" src="https://raw.github.com/atomizejs/atomize-client/master/lib/compat.js"></script>
 <script type="text/javascript" src="https://raw.github.com/atomizejs/atomize-client/master/lib/atomize.js"></script>
-<script>
-var atomize = new Atomize("http://localhost:9999/atomize");
-
-// rest of example goes here
-
-</script>
+<script type="text/javascript" src="atomize-example.js"></script>
 </head>
 <body onload="start();">
 </body>
 </html>
 {% endhighlight %}
 
-As you can see, this assumes that the AtomizeJS server is running on
-`localhost` and listening on port 9999. If this is not the case, then
-please adjust this template as required.
+We will then write the rest of the example in the `atomize-example.js`
+file.
 
 None of these examples need to be *served* by a web-server: provided
 you have the AtomizeJS server running as described above, pointing
 your browser directly at the HTML files on your machine (i.e. with a
 `file:///...` URL) will work perfectly well.
 
+# Compatibility
+
+In most cases, you're probably not going to be using a really
+bleeding-edge web-browser which supports experimental JavaScript
+features. In order for AtomizeJS to work with normal web-browsers,
+there's a [translation tool][translate] provided. After doing an `npm
+install atomize-client`, you should find `npm` has installed an
+`atomize-translate` binary.
+
+You should then write the examples in an `atomize-example.js.raw`
+file, and translate them by running:
+    atomize-translate atomize-example.js.raw atomize-example.js atomize
+
+
 # Writing and reading
 
 {% highlight javascript %}
 function start() {
+    var atomize = new Atomize("http://localhost:9999/atomize");
     atomize.atomically(function () {
         if (atomize.root.x === undefined) {
             atomize.root.x = Date.toString();
@@ -91,7 +106,10 @@ function start() {
 
 This introduces quite a few concepts.
 
-1. The [`atomize.atomically`][`atomically`] function takes two
+
+1. We connect to the AtomizeJS server on localhost, port 9999. If this
+   is not the case, then please adjust this as required.
+2. The [`atomize.atomically`][`atomically`] function takes two
 arguments.
     1. The first argument is the function that is run as a
       transaction, atomically. This function may run more than once:
@@ -104,19 +122,19 @@ arguments.
       the transaction successfully commits, and is passed any result
       returned from the transaction function. This function will only
       be run at most once.
-2. [`atomize.root`][`root`] is the root of the distributed object
+3. [`atomize.root`][`root`] is the root of the distributed object
   graph. Assigning values to properties and objects beneath the
   [`atomize.root`][`root`] object will ensure that those values are
   distributed to all clients using this AtomizeJS server. The initial
   value of the [`atomize.root`][`root`] object is the empty object,
   `{}`.
-3. The same transaction has different behaviours depending on what it
+4. The same transaction has different behaviours depending on what it
   finds. If the client is the first client to run the transaction,
   then it will find that the `x` property is `undefined`. It will then
   assign to the `x` property, and return, thus completing the
   transaction. The second client will find that the `x` property is
   defined, and so will go into the other branch of the `if` statement.
-4. State continues to exist in the server even if clients leave. If
+5. State continues to exist in the server even if clients leave. If
   you start the AtomizeJS server, then point a client at this HTML
   page, then that client will be the first client to run the
   transaction, and will write the current date to the `x` property of
@@ -133,7 +151,8 @@ as:
 
 {% highlight javascript %}
 function start() {
-    var result;
+    var result,
+        atomize = new Atomize("http://localhost:9999/atomize");
     atomize.atomically(function () {
         if (atomize.root.x === undefined) {
             atomize.root.x = Date.toString();
@@ -180,6 +199,7 @@ which have *side-effects*. For example, if you rewrote this code as:
 
 {% highlight javascript %}
 function start() {
+    var atomize = new Atomize("http://localhost:9999/atomize");
     atomize.atomically(function () {
         if (atomize.root.x === undefined) {
             atomize.root.x = Date.toString();
@@ -223,6 +243,7 @@ correctly. For example:
 
 {% highlight javascript %}
 function start() {
+    var atomize = new Atomize("http://localhost:9999/atomize");
     atomize.atomically(function () {
         if (atomize.root.x === undefined) {
             atomize.root.x = atomize.lift({a: "hello"});
@@ -255,6 +276,7 @@ example:
 {% highlight javascript %}
 var myObj;
 function start() {
+    var atomize = new Atomize("http://localhost:9999/atomize");
     atomize.atomically(function () {
         return atomize.lift({});
     }, function (obj) {
@@ -288,6 +310,8 @@ the need for spinning. This is the purpose of the [`retry`][]
 operation. For example:
 
 {% highlight javascript %}
+var atomize = new Atomize("http://localhost:9999/atomize");
+
 function start() {
     if (Math.random() > 0.2) {
         receive();
@@ -363,6 +387,7 @@ the queue, where new values get added.
 First, we need to ensure we only have one writer:
 
 {% highlight javascript %}
+var atomize = new Atomize("http://localhost:9999/atomize");
 var writer;
 var nextValue = 0;
 
