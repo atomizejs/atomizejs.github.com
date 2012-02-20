@@ -38,19 +38,19 @@ The mental model you should have when using AtomizeJS is as follows:
   change the objects as desired. These functions are then run by
   AtomizeJS as transactions. AtomizeJS ensures that these transaction
   functions are run:
-    * *atomically*: Either the transaction functions completes or
-      fails in its entirety - it is impossible for a transaction to
-      partly succeed.
-    * *consistently*: The transaction function starts with a
-      consistent view of the object graph, and it ends with a
-      consistent view. If the transaction succeeds then the changes
-      the transaction function has made are completely applied. If the
-      transaction errors, then any changes the transaction function
-      has made are completely undone.
-    * *in isolation*: The transaction function is run as if no other
-      transactions are running at the same time - the transaction
-      function does not have to think about locking or critical
-      regions.
+    * *atomically*: Transactions are atomic (all or nothing).
+    * *consistently*: Transactions preserve the object graph's
+      consistency. That is, a transaction transforms a consistent
+      state of the object graph into another consistent state, without
+      necessarily preserving consistency at all intermediate points.
+    * *in isolation*: Transactions are isolated from one another. That
+      is, even though in general there will be many transactions
+      running concurrently, any given transaction's updates are
+      concealed from all the rest, until that transaction
+      commits. Another way of saying that same thing is that, for any
+      two distinct transactions *T1* and *T2*, *T1* might see *T2*'s
+      updates (after *T2* has committed) or *T2* might see *T1*'s
+      updates (after *T1* has committed), but certainly not both.
 
 Transactions cannot deadlock: when a transaction function is run,
 AtomizeJS detects if other transactions have modified the same objects
