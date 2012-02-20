@@ -27,7 +27,7 @@ then yes, you can get the source of `myFun` and you can transform it
 as necessary. But you can't then re-`eval()` it back to a function
 *and* have it capture the same value of `a` as before: there's no way
 to extract the bound variables the closure captured the first time in
-order to represent them to the `eval()`.
+order to re-present them to the `eval()`.
 
 So instead we have the translation tool, and yes, it's not ideal, and
 you may have to treat external libraries too (though actually I
