@@ -198,3 +198,37 @@ atomize.orElse(
 * Returns `true` if currently in a transaction and `false` otherwise
 * No arguments
 * Can be called both inside and outside a transaction
+
+
+## Extended Client API
+
+The following methods are available in the client and are used by the
+[translation tool][translate] for browsers that do not yet support
+[Proxies][]. If you wish, you can write code that directly uses this
+API, and thus avoid the need to use the [translation tool][translate].
+
+<div id="access"></div>
+### - `access(obj, fieldName)`
+
+* `access(a, b)` is the equivalent of `a.b`
+
+<div id="assign"></div>
+### - `assign(obj, fieldName, value)`
+
+* `assign(a, b, c)` is the equivalent of `a.b = c`
+
+<div id="enumerate"></div>
+### - `enumerate(obj)`
+
+* Is used in the translation of `for (a in b) ...` loops: rewritten to
+    become `for (a in atomize.enumerate(b)) ...`
+
+<div id="has"></div>
+### - `has(obj, fieldName)`
+
+* `has(a, b)` is the equivalent of `b in a`
+
+<div id="erase"></div>
+### - `erase(obj, fieldName)`
+
+* `erase(a, b)` is the equivalent of `delete a.b`

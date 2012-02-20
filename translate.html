@@ -15,17 +15,17 @@ installed an `atomize-translate` binary.
 
 # Usage
 
-`atomize-translate` *`input`* *`output`* *`atomizeVar`* [*`ignore`*...]
+`atomize-translate` *`input`* *`output`* *`atomizeVar`* *[`ignore`...]*
 
-* `input`: The path to the input file. The input file must be a pure
+* *`input`*: The path to the input file. The input file must be a pure
   JavaScript file, not be an HTML file with JavaScript embedded.
-* `output`: The path to the output file.
-* `atomizeVar`: The name of the `atomize` variable, i.e. variable to
+* *`output`*: The path to the output file.
+* *`atomizeVar`*: The name of the `atomize` variable, i.e. variable to
   which the result `new Atomize(URL)` is assigned. A limitation of
   using the translation tool is that it is assumed this variable is
   both global, and that only one AtomizeJS server is ever connected to
   at any one time.
-* [`ignore`...]: Names of variables that should be excluded from
+* *[`ignore`...]*: Names of variables that should be excluded from
   translation. This list always implicitly contains the `atomizeVar`
   and `this`.
 
@@ -44,10 +44,11 @@ function Ball (x, y) {
 
 Ball.prototype = {
     bounce: function () {
+        var self = this;
         server.atomically(function () {
-            this.raw.y = -this.raw.y;
+            self.raw.y = -self.raw.y;
         }, function (y) {
-            this.y = y;
+            self.y = y;
         });
     }
 };
@@ -61,3 +62,73 @@ though the functions within it will be translated correctly. However,
 if in the transaction you manipulated the global `Ball` object itself
 (rather than an instance of the `Ball` object) then it would be wrong
 to have `Ball` in the ignored list.
+
+It is normally safe to leave the *[`ignore`...]* list empty. However,
+doing so will likely result in the connection to the AtomizeJS server
+being required as the source code is itself being loaded by the
+browser. Thus in the above example, as the connection to the server is
+established as the first line, there would be no problem in leaving
+the *[`ignore`...]* field empty. But were the connection established
+in some other function later on, the `ball.js` file would fail to load
+if the *[`ignore`...]* field does not contain the global `Ball`.
+
+**In general, global variables which are accessed and assigned to as
+part of loading the JavaScript file may well need to be provided to
+the *[`ignore`...]* field.**
+
+Also note that if in your transactions you call functions that reside
+in other files, you should run the translation tool on those files
+too.
+
+You must also `<script/>`-include the
+[compat.js](https://github.com/atomizejs/atomize-client/blob/master/lib/compat.js)
+library *before* the
+[atomize.js](https://github.com/atomizejs/atomize-client/blob/master/lib/atomize.js)
+library in the browser. It does no harm to load this
+[compat.js](https://github.com/atomizejs/atomize-client/blob/master/lib/compat.js)
+library even on bleeding-edge browsers: the library will detect
+whether or not it's really needed and act accordingly.
+
+
+# Under the bonnet
+
+AtomizeJS relies on proxies. A proxy gives the programmer the ability
+to intercept *all* actions upon an object and AtomizeJS needs this to
+be able to figure out the actions that are performed as part of a
+transaction: to intercept and record these actions as part of the
+transaction log. Thus even if you have `a[x] = 5`, the proxy will
+ensure that the assignment will be intercepted regardless of where the
+value of `x` came from - it might even come directly from the user.
+
+If the browser does not support proxies then there's not much you can
+do without re-writing the code, and that's what the translation tool
+does. Yes, you could use the `Object.defineProperty` to implement
+getters and setters, but that only works for existing properties. If
+you have `var a = {}, x = Math.random(); a[x] = 'hello';` then you
+can't intercept the assignment to a new field by using
+`Object.defineProperty`.
+
+The translation tool thus rewrites all assignments, accesses, `for a
+in b` iterations, `a in b` checks, and `delete` operations to
+explicitly go via an extended AtomizeJS API. Thus assuming the
+connection to the AtomizeJS server is assigned to a variable called
+`atomize`, the translation tool will, for example, rewrite
+
+    a[x] = 5;
+
+into
+
+    atomize.assign(a, x, 5);
+
+and will rewrite
+
+    a.b = c[d];
+
+into
+
+    atomize.assign(a, 'b', atomize.access(c, [d]));
+
+There is nothing to stop you from writing code which uses this API
+directly, and indeed if you do so, then you will not need to use the
+translation tool at all, and your code will work in both old and new
+browsers. But it does make the code a little less concise.
