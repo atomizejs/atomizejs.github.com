@@ -1,0 +1,42 @@
+---
+layout: post
+title: Translation
+---
+
+Broad browser compatibility is here now: the current versions of all
+the major browsers now work with AtomizeJS. The cost though is the
+[translation tool][translate].
+
+In the end there was no choice: it has to be a server-side and/or
+static translation of JavaScript, or just write to an extended API and
+pay the cost up front. I had wondered about doing a dynamic
+browser-side on-demand translation: after all, you should get the
+source code of any given function with `fun.toString()`. The problem
+though is that after you've done the translation, you have to `eval()`
+it back to a function, but now you're in a different environment. So
+if you previously had:
+
+{% highlight javascript %}
+var a = 5;
+function myFun () {
+    return a;
+}
+{% endhighlight %}
+
+then yes, you can get the source of `myFun` and you can transform it
+as necessary. But you can't then re-`eval()` it back to a function
+*and* have it capture the same value of `a` as before: there's no way
+to extract the bound variables the closure captured the first time in
+order to represent them to the `eval()`.
+
+So instead we have the translation tool, and yes, it's not ideal, and
+you may have to treat external libraries too (though actually I
+believe there probably won't be too many cases where that's
+necessary). The code you get back is readable and nicely formatted,
+and makes the transformations applied quite obvious. Most importantly,
+it's enough to show that this will work with older browsers and that
+the AtomizeJS itself is a viable technology for writing applications
+today.
+
+Or at least that's what I think! As ever, [feedback][contact] is very
+welcome.
