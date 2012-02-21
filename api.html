@@ -89,14 +89,15 @@ atomize.atomically(function () {
 * Prepares an object for management by the AtomizeJS system
 * One argument: the object to be managed
 * Must be used before assigning an object into another AtomizeJS
-  object
+  object; if you do not, the assignment will fail and a
+  `NotATVarException` exception will be thrown
 * Safe to use on both primitives and objects though is unnecessary for
   primitives
 * Idempotent: calling lift on the same object multiple times will
   return the same managed AtomizeJS object
 * It is safe to use lift outside of a transaction: this is because
   when used outside of a transaction, it implicitly creates and
-  commits a function which merely passes the object through to the
+  commits a transaction which merely passes the object through to the
   AtomizeJS server. This can't possibly fail, so you do not need to
   consider the possibility of such a trasaction retrying
 
