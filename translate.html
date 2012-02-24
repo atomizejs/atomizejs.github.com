@@ -26,8 +26,7 @@ installed an `atomize-translate` binary.
   both global, and that only one AtomizeJS server is ever connected to
   at any one time.
 * *[`ignore`...]*: Names of variables that should be excluded from
-  translation. This list always implicitly contains the `atomizeVar`
-  and `this`.
+  translation. This list always implicitly contains the `atomizeVar`.
 
 The tool should be run on any JavaScript file that contains code that
 can be reached from within an AtomizeJS transaction. For example, if
@@ -55,13 +54,13 @@ Ball.prototype = {
 {% endhighlight %}
 
 Then you should run the translation tool as
-    atomize-translate ball.js.raw ball.js server Ball
+    atomize-translate ball.js.raw ball.js server Ball this
 
-This will ensure that the `Ball` object itself is left untouched, even
-though the functions within it will be translated correctly. However,
-if in the transaction you manipulated the global `Ball` object itself
-(rather than an instance of the `Ball` object) then it would be wrong
-to have `Ball` in the ignored list.
+This will ensure that the `Ball` object itself and `this` is left
+untouched, even though the functions within the `Ball` object will be
+translated correctly. However, if in the transaction you manipulated
+the global `Ball` object itself (rather than an instance of the `Ball`
+object) then it would be wrong to have `Ball` in the ignored list.
 
 It is normally safe to leave the *[`ignore`...]* list empty. However,
 doing so will likely result in the connection to the AtomizeJS server
