@@ -19,15 +19,18 @@ Please also see the [getting started][] page.
 * Two parameters:
     1. HTTP server: typically returned from `http.createServer()`;
     2. Path within the server to provide the AtomizeJS service
-* Note the *client* is available from within the server by accessing
-  the `atomize` field
+* Note the *client* is available from within the server by calling the
+  `client` method on the returned object
 
 {% highlight javascript %}
 var http = require('http');
-var atomizeServer = require('atomize-server');
-atomizeServer.create(server, '[/]atomize');
-server.listen(port, '0.0.0.0');
-var atomizeClient = atomizeServer.atomize;
+var atomize = require('atomize-server');
+
+var httpServer = http.createServer();
+var atomizeServer = atomize.create(httpServer, '[/]atomize');
+server.listen(9999, '0.0.0.0');
+
+var atomizeClient = atomizeServer.client();
 {% endhighlight %}
 
 
