@@ -84,27 +84,38 @@ file, and translate them by running:
 {% highlight javascript %}
 function start() {
     var atomize = new Atomize("http://localhost:9999/atomize");
-    atomize.atomically(function () {
-        if (atomize.root.x === undefined) {
-            atomize.root.x = Date.toString();
-            return "Wrote " + atomize.root.x;
-        } else {
-            var result = atomize.root.x;
-            delete atomize.root.x;
-            return "Read " + result;
-        }
-    }, function (result) {
-        console.log(result);
-    });
+    atomize.onAuthenticated = function () {
+        atomize.atomically(function () {
+            if (atomize.root.x === undefined) {
+                atomize.root.x = Date.toString();
+                return "Wrote " + atomize.root.x;
+            } else {
+                var result = atomize.root.x;
+                delete atomize.root.x;
+                return "Read " + result;
+            }
+        }, function (result) {
+            console.log(result);
+        });
+    };
+    atomize.connect();
 }
 {% endhighlight %}
 
 This introduces quite a few concepts.
 
 
-1. We connect to the AtomizeJS server on localhost, port 9999. If this
-   is not the case, then please adjust this as required.
-2. The [`atomize.atomically`][`atomically`] function takes two
+1. We create a new Atomize object, and tell it that it's going to
+   connect to the AtomizeJS server on localhost, port 9999. If this is
+   not the case, then please adjust this as required.
+2. We set up a function to run once we've managed to connect and
+   authenticate with the server. We're not going to cover
+   authentication at this stage, but the hooks are there to implement
+   any form of authentication you want. As the server code above is
+   written, there are no authentication steps to perform, so we can
+   assume that the `onAuthenticated` function is going to be run as
+   soon as we've connected to the server.
+3. The [`atomize.atomically`][`atomically`] function takes two
 arguments.
     1. The first argument is the function that is run as a
       transaction, atomically. This function may run more than once:
@@ -117,26 +128,29 @@ arguments.
       the transaction successfully commits, and is passed any result
       returned from the transaction function. This function will only
       be run at most once.
-3. [`atomize.root`][`root`] is the root of the distributed object
-  graph. Assigning values to properties and objects beneath the
-  [`atomize.root`][`root`] object will ensure that those values are
-  distributed to all clients using this AtomizeJS server. The initial
-  value of the [`atomize.root`][`root`] object is the empty object,
-  `{}`.
-4. The same transaction has different behaviours depending on what it
-  finds. If the client is the first client to run the transaction,
-  then it will find that the `x` property is `undefined`. It will then
-  assign to the `x` property, and return, thus completing the
-  transaction. The second client will find that the `x` property is
-  defined, and so will go into the other branch of the `if` statement.
-5. State continues to exist in the server even if clients leave. If
-  you start the AtomizeJS server, then point a client at this HTML
-  page, then that client will be the first client to run the
-  transaction, and will write the current date to the `x` property of
-  the [`root`][] object. The effect of this transaction exists on the
-  server. Thus even if you shut your browser down and restart it, when
-  you next visit the page, you'll be the second client there, and thus
-  will read the previously written date.
+4. [`atomize.root`][`root`] is the root of the distributed object
+   graph. Assigning values to properties and objects beneath the
+   [`atomize.root`][`root`] object will ensure that those values are
+   distributed to all clients using this AtomizeJS server. The initial
+   value of the [`atomize.root`][`root`] object is the empty object,
+   `{}`.
+5. The same transaction has different behaviours depending on what it
+   finds. If the client is the first client to run the transaction,
+   then it will find that the `x` property is `undefined`. It will
+   then assign to the `x` property, and return, thus completing the
+   transaction. The second client will find that the `x` property is
+   defined, and so will go into the other branch of the `if`
+   statement.
+6. State continues to exist in the server even if clients leave. If
+   you start the AtomizeJS server, then point a client at this HTML
+   page, then that client will be the first client to run the
+   transaction, and will write the current date to the `x` property of
+   the [`root`][] object. The effect of this transaction exists on the
+   server. Thus even if you shut your browser down and restart it,
+   when you next visit the page, you'll be the second client there,
+   and thus will read the previously written date.
+7. Having set up the function to run once we're authenticated, we then
+   call `connect` to set it all in motion.
 
 ## The importance of continuations
 
@@ -148,16 +162,19 @@ as:
 function start() {
     var result,
         atomize = new Atomize("http://localhost:9999/atomize");
-    atomize.atomically(function () {
-        if (atomize.root.x === undefined) {
-            atomize.root.x = Date.toString();
-            result = "Wrote " + atomize.root.x;
-        } else {
-            var result = atomize.root.x;
-            delete atomize.root.x;
-            result = "Read " + result;
-        }
-    });
+    atomize.onAuthenticated = function () {
+        atomize.atomically(function () {
+            if (atomize.root.x === undefined) {
+                atomize.root.x = Date.toString();
+                result = "Wrote " + atomize.root.x;
+            } else {
+                var result = atomize.root.x;
+                delete atomize.root.x;
+                result = "Read " + result;
+            }
+        });
+    };
+    atomize.connect();
     console.log(result);
 }
 {% endhighlight %}
@@ -195,16 +212,19 @@ which have *side-effects*. For example, if you rewrote this code as:
 {% highlight javascript %}
 function start() {
     var atomize = new Atomize("http://localhost:9999/atomize");
-    atomize.atomically(function () {
-        if (atomize.root.x === undefined) {
-            atomize.root.x = Date.toString();
-            console.log("Wrote " + atomize.root.x);
-        } else {
-            var result = atomize.root.x;
-            delete atomize.root.x;
-            console.log("Read " + result);
-        }
-    });
+    atomize.onAuthenticated = function () {
+        atomize.atomically(function () {
+            if (atomize.root.x === undefined) {
+                atomize.root.x = Date.toString();
+                console.log("Wrote " + atomize.root.x);
+            } else {
+                var result = atomize.root.x;
+                delete atomize.root.x;
+                console.log("Read " + result);
+            }
+        });
+    };
+    atomize.connect();
 }
 {% endhighlight %}
 
@@ -239,19 +259,22 @@ correctly. For example:
 {% highlight javascript %}
 function start() {
     var atomize = new Atomize("http://localhost:9999/atomize");
-    atomize.atomically(function () {
-        if (atomize.root.x === undefined) {
-            atomize.root.x = atomize.lift({a: "hello"});
-            atomize.root.x.date = Date.toString();
-            return "Wrote " + atomize.root.x.date;
-        } else {
-            var result = atomize.root.x.date;
-            delete atomize.root.x;
-            return "Read " + result;
-        }
-    }, function (result) {
-        console.log(result);
-    });
+    atomize.onAuthenticated = function () {
+        atomize.atomically(function () {
+            if (atomize.root.x === undefined) {
+                atomize.root.x = atomize.lift({a: "hello"});
+                atomize.root.x.date = Date.toString();
+                return "Wrote " + atomize.root.x.date;
+            } else {
+                var result = atomize.root.x.date;
+                delete atomize.root.x;
+                return "Read " + result;
+            }
+        }, function (result) {
+            console.log(result);
+        });
+    };
+    atomize.connect();
 }
 {% endhighlight %}
 
@@ -272,11 +295,14 @@ example:
 var myObj;
 function start() {
     var atomize = new Atomize("http://localhost:9999/atomize");
-    atomize.atomically(function () {
-        return atomize.lift({});
-    }, function (obj) {
-        myObj = obj;
-    });
+    atomize.onAuthenticated = function () {
+        atomize.atomically(function () {
+            return atomize.lift({});
+        }, function (obj) {
+            myObj = obj;
+        });
+    };
+    atomize.connect();
 }
 {% endhighlight %}
 
@@ -308,11 +334,14 @@ operation. For example:
 var atomize = new Atomize("http://localhost:9999/atomize");
 
 function start() {
-    if (Math.random() > 0.2) {
-        receive();
-    } else {
-        send();
-    }
+    atomize.onAuthenticated = function () {
+        if (Math.random() > 0.2) {
+            receive();
+        } else {
+            send();
+        }
+    };
+    atomize.connect();
 }
 
 function receive() {
@@ -387,20 +416,23 @@ var writer;
 var nextValue = 0;
 
 function start() {
-    atomize.atomically(function () {
-        if (atomize.root.queue === undefined) {
-            atomize.root.queue = atomize.lift({
-                    next: atomize.lift({}),
-                    value: nextValue
-                });
-            return true;
-        } else {
-            return false;
-        }
-    }, function (w) {
-        writer = w;
-        loop();
-    });
+    atomize.onAuthenticated = function () {
+        atomize.atomically(function () {
+            if (atomize.root.queue === undefined) {
+                atomize.root.queue = atomize.lift({
+                        next: atomize.lift({}),
+                        value: nextValue
+                    });
+                return true;
+            } else {
+                return false;
+            }
+        }, function (w) {
+            writer = w;
+            loop();
+        });
+    };
+    atomize.connect();
 }
 {% endhighlight %}
 

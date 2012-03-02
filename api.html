@@ -8,32 +8,6 @@ Please also see the [getting started][] page.
 # API
 
 
-<div id="server"></div>
-## Server
-
-
-<div id="create"></div>
-### - `create(server, path)`
-
-* Create a new AtomizeJS server
-* Two parameters:
-    1. HTTP server: typically returned from `http.createServer()`;
-    2. Path within the server to provide the AtomizeJS service
-* Note the *client* is available from within the server by calling the
-  `client` method on the returned object
-
-{% highlight javascript %}
-var http = require('http');
-var atomize = require('atomize-server');
-
-var httpServer = http.createServer();
-var atomizeServer = atomize.create(httpServer, '[/]atomize');
-server.listen(9999, '0.0.0.0');
-
-var atomizeClient = atomizeServer.client();
-{% endhighlight %}
-
-
 <div id="client"></div>
 ## Client
 
@@ -46,13 +20,55 @@ API is available in the NodeJS server as shown above under the
 ### - `Atomize(URL)` constructor
 
 * Browser-side only
-* Creates a new atomize client
+* Creates a new atomize client but does not connect immediately to the
+  server
 * Maximum one argument which is the URL to the AtomizeJS server
 * If no URL is provided then local-only operation is assumed
 
 {% highlight javascript %}
 var atomize = new Atomize("http://localhost:9999/atomize");
 {% endhighlight %}
+
+
+<div id="connect"></div>
+### - `connect()`
+
+* Attempts to connect to the AtomizeJS server. If no URL was specified
+  to the constructor, this is a no-op
+
+
+<div id="onPreAuthenticated"></div>
+### - `onPreAuthenticated`
+
+* Assign to this the function that you wish to run once the client has
+  connected to the server
+* The function is passed two parameters:
+    1. Any message received from the server. The function is first run
+       as soon as the connection is established, and at this point
+       there is no such message, so this parameter will be
+       `undefined`. However, this function may be called multiple
+       times which allows for challenge-response authentication
+       mechanisms to be used. Subsequent invocations of this function
+       occur only once a message has been received from the
+       server. The message is the same object as SockJS provides to
+       its `onmessage` callback
+    2. The SockJS connection object. This allows you to `send` data to
+       the server. This object is provided on every invocation of this
+       function
+* Once this function returns `true`, AtomizeJS assumes the client has
+  successfully authenticated with the server, and so does not invoke
+  this function again
+* By default there is no authentication required, so by default, this
+  function will never be called
+
+
+<div id="onAuthenticated"></div>
+### - `onAuthenticated`
+
+* Assign to this the function that you wish to run once the client has
+  authenticated with the server. By default, there is no authentication
+  required
+* No arguments are passed to the function
 
 
 <div id="root"></div>
@@ -236,3 +252,152 @@ API, and thus avoid the need to use the [translation tool][translate].
 ### - `erase(obj, fieldName)`
 
 * `erase(a, b)` is the equivalent of `delete a.b`
+
+
+<div id="server"></div>
+## Server
+
+
+<div id="create"></div>
+### - `create(server, path, root)`
+
+* Create a new AtomizeJS server
+* Two mandatory parameters:
+    1. HTTP server: typically returned from `http.createServer()`;
+    2. Path within the server to provide the AtomizeJS service
+* One optional parameter:
+    3. The initial [`root`][] object. If omitted, the initial
+    [`root`][] object will be a fresh empty object `{}`.
+* Note the *client* is available from within the server by calling the
+  `client` method on the returned object
+
+{% highlight javascript %}
+var http = require('http');
+var atomize = require('atomize-server');
+
+var httpServer = http.createServer();
+var atomizeServer = atomize.create(httpServer, '[/]atomize');
+server.listen(9999, '0.0.0.0');
+
+var atomizeClient = atomizeServer.client();
+{% endhighlight %}
+
+
+<div id="serverEvents"></div>
+## Server Events
+
+
+<div id="onConnection"></div>
+### - `'connection'`
+
+* Emitted when a new client connects to the server
+* The listeners are passed a `client` object which can be used to
+  directly communicate back to the client as part of any
+  authentication scheme
+* Authentication is considered complete when you set
+  `client.isAuthenticated = true;`
+* If no listeners are installed for this event, the server will
+  immediately mark every connection authenticated: i.e. by default
+  there is no explicit authentication
+* The client object itself is also an event emitter
+
+
+<div id="serverEventsPerClient"></div>
+## Server Events Per Client
+
+
+<div id="onClose"></div>
+### - `'close'`
+
+* Emitted when the client connection is closed
+* The listeners are passed the `client` object
+
+
+<div id="onData"></div>
+### - `'data'`
+
+* Emitted when data is received from the client as part of
+  authentication.
+* The listeners are passed two arguments:
+    1. The message received from the client. This is the same message
+       object that is emitted by the SockJS `'data'` event.
+    2. The `client` object. This can be used to directly communicate
+       back to the client as part of authentication steps.
+* Authentication is considered complete when you set
+  `client.isAuthenticated = true;`
+* This event will never be emitted after `client.isAuthenticated` is
+  `true`.
+
+
+<div id="authExample"></div>
+## Example of authentication and server events
+
+The following example shows how to implement (trivial) authentication:
+the client must send a `{text: "wibble"}` JSON object, and the server
+must send back a `{text: "wobble"}` JSON object; and also how to
+modify the [`root`][] object so that the `root.clients` object
+contains an entry per client.
+
+{% highlight javascript %}
+var http = require('http');
+var atomize = require('atomize-server');
+var httpServer = http.createServer();
+var port = 9999;
+
+var atomizeServer = atomize.create(httpServer, '[/]atomize');
+var atomizeClient = atomizeServer.client();
+atomizeClient.atomically(function () {
+    atomizeClient.root.clients = atomizeClient.lift({server: {}});
+}, function () {
+    atomizeServer.on('connection', function (client) {
+
+        client.on('close', function (client) {
+            atomizeClient.atomically(function () {
+                delete atomizeClient.root.clients[client.connection.id];
+            }, function () {
+                console.log("Connection death: " + client.connection.id);
+            });
+        });
+
+        client.on('data', function (message, client) {
+            var text = JSON.parse(message).text;
+            if (text === "wibble") {
+                client.connection.write(JSON.stringify({text: "wobble"}));
+
+                atomizeClient.atomically(function () {
+                    atomizeClient.root.clients[client.connection.id] =
+                            atomizeClient.lift({});
+                }, function () {
+                    console.log("New connection id: " + client.connection.id);
+                    client.isAuthenticated = true;
+                });
+            } else {
+                client.connection.write(JSON.stringify({text: "denied"}));
+            }
+        });
+    });
+});
+
+console.log(" [*] Listening on 0.0.0.0:" + port);
+httpServer.listen(port, '0.0.0.0');
+{% endhighlight %}
+
+Corresponding client side code might look like:
+
+{% highlight javascript %}
+function start () {
+    atomize = new Atomize("http://localhost:9999/atomize");
+    atomize.onPreAuthenticated = function (message, sockjs) {
+        if (undefined === message) {
+            // 1st time through
+            sockjs.send(JSON.stringify({text: "wibble"}));
+            return false;
+        } else {
+            return JSON.parse(message.data).text === "wobble";
+        }
+    };
+    atomize.onAuthenticated = function () { // Ready to go!
+    };
+    atomize.connect();
+}
+{% endhighlight %}
