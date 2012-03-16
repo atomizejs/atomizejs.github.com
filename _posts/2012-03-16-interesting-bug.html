@@ -1,0 +1,188 @@
+---
+layout: post
+title: Interesting Bug
+---
+
+I've spent the whole of today chasing down a bug. I've finally found
+what's causing it, yet currently have no idea how to solve it. I think
+it's a rather amazing bug which shows some very interesting behaviour.
+
+Over the last couple of days, I've been building out a test suite so
+that as I add additional features, I can have a degree of confidence
+I've not obviously broken things. This morning I wrote a test which
+deliberately has a large number of transactions that collide with each
+other: indeed overall progress is slow because of the huge contention
+created. The basic idea is we start with a global `a` object, and
+structure (this is all a bit simplified, but not by too much):
+
+{% highlight javascript %}
+a = {0: {num: 1000},
+     1: {num: 1000},
+     2: {num: 1000}}
+{% endhighlight %}
+
+Then, every transaction decrements the `num` field in every object it
+finds within `a`. Just to shake things up a bit more, randomly, each
+transaction can replace one of the inner objects. The replacement will
+also contain a `num` field and the correct value. The test stops when
+all the fields reach `0`.
+
+I set up several clients connected to the same AtomizeJS server, and
+each client ran several transactions that looked like:
+
+{% highlight javascript %}
+var fun;
+fun = function (c) {
+    c.atomically(function () {
+        if (undefined === a) {
+            c.retry();
+        }
+        var keys = Object.keys(a),
+            x, field, n, obj;
+        for (x = 0; x < keys.length; x += 1) {
+            field = keys[x];
+            if (undefined === n) {
+                n = a[field].num;
+                if (0 === n) {
+                    return n;
+                }
+            } else if (n !== a[field].num) {
+                throw ("All fields should have the same number: " +
+                       n + " vs " + a[field].num);
+            }
+            if (0.5 < Math.random()) {
+                obj = c.lift({});
+                obj.num = n;
+                a[field] = obj;
+            }
+            a[field].num -= 1;
+        }
+        return n;
+    }, function (n) {
+        if (n > 0) {
+            fun(c); // recurse
+        } else {
+            // Test done!
+        }
+    });
+}
+{% endhighlight %}
+
+And then, with various different AtomizeJS clients, invoke `fun` with
+the client, and set up a suitable `a` object managed by AtomizeJS and
+known to all the clients.
+
+Turns out, we hit the exception within the transaction. Yup,
+**within** the transaction, we can violate the isolation and atomic
+properties. Even more interesting was the minimum requirements for
+provoking the bug: you need two clients (i.e. two instances of
+`Atomize`) and three transactions in flight at the same time (i.e. one
+client must run multiple copies of the transaction *at the same time*
+- or at least as close as you can get in JavaScript: when one
+transaction commits, and goes to the network to send the transaction
+log to the server, whilst waiting for the response, it then goes and
+starts the other transaction). Running all three transactions in the
+same client can't provoke it, nor can running one transaction each in
+three different clients. If you rewrite the test so that it does the
+throw based on a test in the continuation (i.e. after each transaction
+has committed) then it never goes wrong, which means that the
+violation is eliminated when the transaction commits. But even so,
+within a transaction, you should not be able to see the partial
+effects of other transactions. The random changing of objects within
+`a` is crucial: if you don't replace the objects, the bug doesn't
+appear.
+
+So what on earth is going on?
+
+Two clients: *c1* and *c2*. Three transactions: *t1*, *t2* and
+*t3*. For simplicity, I'm going to define these transactions precisely
+as:
+
+{% highlight javascript %}
+t1 = function () {
+    a.0.num -= 1;
+    a.1 = atomize.lift({num: a.0.num});
+    a.2.num -= 1;
+};
+t2 = function () {
+    a.0.num -= 1;
+    a.1.num -= 1;
+    a.2.num -= 1;
+};
+t3 = t2;
+{% endhighlight %}
+
+Initially, both clients are aware of `a` as shown at the top of this
+post. The `a`, and `0`, `1` and `2` objects are all at *version 1* of
+themselves, and this is known to both clients.
+
+First, *c1* runs *t1* followed immediately by *t2*: i.e. whilst the
+transaction log of *t1* is in flight to the server, *c1* starts
+running *t2*. Thus both *t1* and *t2* get first run on the original
+objects, and so both will try to change the values of 1000 to 999.
+
+The transaction *t1* will have a read set of `a`, `0` and `2`, and a
+write set of `a`, `0` and `2`. This transaction goes to the server,
+commits successfully and comes back to *c1* which updates its own
+copies of the objects. The object at `a.1` has changed: the new object
+is at *version 1* (along with the previous old object that used to be
+reachable from `a.1`), whilst all the other objects (`a`, `0` and `2`)
+are now at *version 2*. The `num` fields have values of 999 now,
+though the original object that was at `a.1` has a `num` value of 1000
+still. Only the server and *c1* know all this.
+
+Whilst that was going on, *c2* runs *t3*. This transaction is initially
+run against the original objects (*version 1* of everything, with
+`num` fields at 1000). The transaction log arrives at the server after
+*t1*, and gets rejected because *t1* committed successfully, and
+changed the versions. The server sends back to *c2* *version 2* of
+`a`, `0` and `2`, along with *version 1* of the new object reachable
+from `a.1` (but all with `num` fields of 999). The client, *c2* now
+restarts *t3*. This time *t3* has a transaction log with a read set of
+`a`, `0`, and `2` at *version 2*, plus the new `1` at *version 1*, and
+a write set of `0` (*version 2*), `1` (*version 1* - remember: the new
+replacement object), and `2` (*version 2*). This goes to the server
+and commits correctly. The version numbers are bumped accordingly:
+both *c2* and the server agree that `a`, `0` and `2` are now at
+*version 3*, the old original `1` (which is no longer reachable) is at
+*version 1*, and the new `1` is at *version 2*. The `num` fields are
+all now at 998, except for the old `a.1` object that's still at 1000,
+but it's unreachable, so it doesn't matter.
+
+Now, the transaction log from *t2* arrives at the server. It was run
+by *c1* a while ago, indeed against the original objects (*version 1*
+of everything - `num` fields at 1000), but the server's been kept busy
+and is only now getting around to dealing with it. Blame the
+network. The transaction log of *t2* contains reads of *version 1* of
+`a`, `0`, `1` (the original `1`) and `2`. The server notices that
+these are old versions and rejects the transaction. But here comes the
+problem: the server sends down the current versions of `a`, `0` and
+`2` (all *version 3* - `num` fields at 998). It does not send down the
+current version of `a.1` because the transaction log from *t2* had
+nothing to do with the *current* object at `a.1`: it only mentions the
+old original object that was at `a.1`, an no one's modified that
+object: it still has a `num` field at 1000.
+
+So now the client *c1* applies those updates, and restarts *t2*. Now
+*t2* sees that `a.0` and `a.1` have `num` fields at 998, but `a.1.num`
+is actually at 999, because *t2* (and indeed *c1* as a whole) has not
+seen the effect of *t3* (run by *c2*) on `a.1`: it's only seen the
+effect of *t1*. Thus isolation is broken: *t2* is seeing parts of the
+world from before *t3* committing and other parts from
+afterwards.
+
+When *t2* now commits again, the server will again reject it because
+this time, *t2*'s transaction log will contain a read and a write of
+the new object at `a.1`, but at *version 1*, not *version 2*. So the
+server will reject it, send the update to the new `a.1` which the
+client *c1* will apply to get its `a.1` up to *version 2*, and finally
+*t2* will be restarted and this time will commit successfully.
+
+Race conditions like these are always fun to unravel. Even more fun is
+that I currently have no idea how to solve this: it's almost like we
+need some sort of dependency chain to say that "if the server is going
+to send down version X of object J, then it must also send down
+version Y of object K". In many ways, this seems to be rather like a
+cache invalidation problem. I wonder how other STM systems solve this,
+whether they don't, or whether the problem really only appears due to
+the distributed nature of AtomizeJS. I think it might be the latter.
