@@ -160,7 +160,7 @@ problem: the server sends down the current versions of `a`, `0` and
 `2` (all *version 3* - `num` fields at 998). It does not send down the
 current version of `a.1` because the transaction log from *t2* had
 nothing to do with the *current* object at `a.1`: it only mentions the
-old original object that was at `a.1`, an no one's modified that
+old original object that was at `a.1`, and no one's modified that
 object: it still has a `num` field at 1000.
 
 So now the client *c1* applies those updates, and restarts *t2*. Now
