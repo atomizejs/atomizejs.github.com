@@ -1,0 +1,113 @@
+---
+layout: post
+title: Interesting Bug Fixed
+---
+
+In [my last post](/2012/03/16/interesting-bug.html), I documented the
+discovery of what I thought was a subtle bug. After some thought over
+the weekend, I eventually decided that it was actually rather
+unsurprising: indeed the surprise was that it had taken so long to
+come to light.
+
+The bug boils down to the following:
+
++ When you commit a transaction, the transaction log is verified. The
+ verification ensures that all the objects read from and written to
+ were done so at their latest, most up to date version. Object
+ versions are only advanced when a transaction successfully commits,
+ and given the server is single threaded, it's thus easy to see that
+ this would lead to consistent modifications to the object state on
+ the server, where consistent is defined as respecting the atomic and
+ isolated properties.
+
++ Where it goes wrong though is when that transaction can't be
+ committed because someone else has, in the meantime, modified some
+ of the same objects that the current transaction has
+ modified. I.e. the server detects that the transaction log documents
+ modifications of *old* versions of objects. At this point, the
+ transaction is rejected, and a set of updates is sent to the
+ client. These updates are there to allow the client to update its own
+ copies of these objects so that it can then restart the transaction
+ and have it run against the most up-to-date versions of these
+ objects, eventually sending back to the server a new transaction log,
+ which hopefully will then commit.
+
++ The bug was that the updates that were sent down to the client
+ contained *only* the objects that had both been changed and were
+ logged in the transaction log. At first glance, that might seem
+ sound, but of course, when the transaction is restarted, it might
+ choose to read and write different objects: you just have no idea. So
+ the first time around, the transaction may modify objects `a` and
+ `b`. If someone else changes `a` in the meantime, the transaction
+ will fail, and the new version of `a` will be sent down to the
+ client. This time, the transaction, on seeing the new version of `a`,
+ instead modifies objects `a` and `c`. But if that middle transaction,
+ the one that only modified `a`, instead modifies both `a` and `c`,
+ then our final transaction will see the new value of `a` but the old
+ value of `c`: the rejected transaction modified only `a` and `b`, so
+ the server didn't think to send the client the new version of
+ `c`. But that means that within the transaction, you can observe a
+ violation of isolation: you see some objects at versions after a
+ transaction, whilst other objects at versions before the same
+ transaction.
+
+I believe I have now fixed this bug. Each client has a representation
+on the server, and that representation tracks which objects and at
+what version number have been sent to the client. When a transaction
+commits, we now build an object that maps every object modified to its
+new version number, and every object modified manages a linked list of
+these. These are the dependencies: they say that *"at the point at
+which `a` was modified to version 3, `c` was also modified to version
+7"*. The linked list then means that if a client representation knew
+that it previously sent version 4 of `c` to the client and it now
+wants to send version 7, it must walk the linked list from its current
+location (corresponding to version 4) all the way up to version
+7. This will allow it to discover that in the course of forming
+versions 5, 6 and 7, several other objects were modified, and so
+updates for these objects must also be sent down to the client. The
+transitive closure of this operation must be found.
+
+The final trick is to ensure that these linked lists are bounded in
+length. Even though it only needs to be a singly-linked list, sadly,
+we have to keep hold of the oldest end of it too (if we didn't have to
+keep track of the oldest end, we could just let the list grow and grow
+and allow GC to tidy it up as necessary). This is because we may have
+to send the object to a client that has never previously seen this
+object at all. We're going to send the latest version of the object
+(indeed, we never keep track of anything other than the latest
+version), but for the same reasons as above, that latest version may
+very well only make sense in the context of updates to other objects,
+or even sending down other objects the client has never seen
+before. Thus we have to be able to find out every object that has ever
+been modified at the same time as our object-to-send, and make sure
+the client has up-to-date versions of all of those too (again, form
+the transitive closure). Clearly, over time, these linked lists could
+become very long indeed.
+
+However, it's possible periodically to roll an object's linked list
+up: to amalgamate all the entries into one, and then shrink the list
+down to a single entry and start appending from there again. The
+intuition is that if one transaction pushed `a` to version 3 and `c`
+to version 7, and the next transaction pushed `a` to version 4 and `b`
+to version 6, then for `a` (and `a` alone), this can be combined to a
+single entry pushing `a` to version 4, `b` to 6, and `c` to 7. After
+all, we will never want to send version 3 of `a` to a client - only
+the most recent version ever gets sent, which at this point would be
+version 4.
+
+The next question would then be: Why bother with the list at all - why
+not just keep an amalgamated set of dependencies for every object? The
+answer is that if that set is very large and most changes to it are
+for single elements, then client representations performing this
+update algorithm will have to iterate through every entry, only
+eventually to find a single relevant change to send down. By keeping
+the linked list, the client representation instead records its
+location in the list, and changes to the amalgamated set correspond to
+new list entries of exactly the change alone. Essentially the list
+stores diffs, and thus avoids client representations having to
+recalculate diffs on every update: they either use the diff directly,
+or have to calculate it only infrequently after a roll-up has
+occurred.
+
+This fix appears in version 0.0.8 of the
+[AtomizeJS node server](https://github.com/atomizejs/atomize-server-node).
