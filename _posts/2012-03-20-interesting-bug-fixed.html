@@ -37,19 +37,20 @@ The bug boils down to the following:
  logged in the transaction log. At first glance, that might seem
  sound, but of course, when the transaction is restarted, it might
  choose to read and write different objects: you just have no idea. So
- the first time around, the transaction may modify objects `a` and
- `b`. If someone else changes `a` in the meantime, the transaction
- will fail, and the new version of `a` will be sent down to the
- client. This time, the transaction, on seeing the new version of `a`,
- instead modifies objects `a` and `c`. But if that middle transaction,
- the one that only modified `a`, instead modifies both `a` and `c`,
- then our final transaction will see the new value of `a` but the old
- value of `c`: the rejected transaction modified only `a` and `b`, so
- the server didn't think to send the client the new version of
- `c`. But that means that within the transaction, you can observe a
- violation of isolation: you see some objects at versions after a
- transaction, whilst other objects at versions before the same
- transaction.
+ the first time around, the transaction may modify objects `a` and `b`
+ (and incidentally, the client already has an old copy of `c` which
+ isn't touched by this transaction). If someone else changes `a` in
+ the meantime, the transaction will fail, and the new version of `a`
+ will be sent down to the client. This time, the transaction, on
+ seeing the new version of `a`, instead modifies objects `a` and
+ `c`. But if that middle transaction, the one that only modified `a`,
+ instead modifies both `a` and `c`, then our final transaction will
+ see the new value of `a` but the old value of `c`: the rejected
+ transaction modified only `a` and `b`, so the server didn't think to
+ send the client the new version of `c`. But that means that within
+ the transaction, you can observe a violation of isolation: you see
+ some objects at versions after a transaction, whilst other objects at
+ versions before the same transaction.
 
 I believe I have now fixed this bug. Each client has a representation
 on the server, and that representation tracks which objects and at

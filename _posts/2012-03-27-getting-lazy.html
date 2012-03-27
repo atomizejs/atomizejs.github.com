@@ -1,0 +1,109 @@
+---
+layout: post
+title: Getting Lazy
+---
+
+Up until today, when a client connects, that client has built into it
+a definition of the [`root`] object at version 1, which is a plain
+empty object, `{}`. When the client performs some transaction that
+reads or modifies the [`root`] object, if the server's version of the
+[`root`] object is different, then *everything* that is reachable from
+the [`root`] object is sent down to the client. This was true in
+general: when the server has to send down an updated version of an
+object, it traverses that object for fields which point to other
+objects that the client doesn't know about, and sends those too. In
+fact, it sends the transitive closure.
+
+The reason for this is pretty simple: until now, I've not had a nice
+way of dealing with dangling pointers. Thus if client *A* does:
+
+{% highlight javascript %}
+atomize.atomically(function () {
+    var a = {}, b = {}, c = {}, d = {};
+    atomize.root.a = atomize.lift(a);
+    atomize.root.a.b = atomize.lift(b);
+    atomize.root.a.b.c = atomize.lift(c);
+    atomize.root.a.b.c.d = atomize.lift(d);
+});
+{% endhighlight %}
+
+and then client *B* does a transaction which reads or modifies an
+older version of the [`root`] object then there was no choice but to
+send down all 4 new objects so that the object graph could be fully
+populated.
+
+This can obviously be quite wasteful: there is the possibility that
+client *B* really doesn't care about those 4 new objects: sure, it
+needs the most up to date version of the [`root`] object, but it was
+happily working away under `atomize.root.differentObject` which
+(obviously) has nothing in common with those objects now reachable
+from `atomize.root.a`.
+
+The solution I've come up with is for the server to send down, in
+certain circumstances, *version 0* objects. These are always plain,
+empty objects. Whenever you try to read from them, the client notices
+you're trying to read from a *version 0* object, and interrupts the
+current transaction. It then transparently sends a retry up to the
+server where the transaction log says *"I just read version 0 of this
+object"*. Immediately, the server notices that there is a newer
+version of that object, sends down the new version, and the client
+then restarts the transaction. Thus there's been no protocol change,
+and this modification is implemented entirely in terms of existing STM
+primitives. But there is no change to the way you write code at all.
+
+So, in the above example, after client *A* has performed its
+transaction, client *B* tries some transaction which modifies the
+[`root`] object. This transaction fails because it was against an
+older version of the [`root`] object, but now, the server only sends
+down a *version 0* object which is directly reachable from
+`atomize.root.a`, and that object is empty: none of the `b`, `c` or
+`d` objects are sent down to client *B*. Now, should client *B* now
+attempt a transaction which reads from this `a` object, for example:
+
+{% highlight javascript %}
+atomize.atomically(function () {
+    return Object.keys(atomize.root.a);
+}, console.log.bind(console));
+{% endhighlight %}
+
+the client will spot it read from a *version 0* object (`a`), and
+transparently issue a transaction up to the server which will merely
+cause the server to send down the full `a` object. Now, that `a`
+object which have a `b` field which will point to a *version 0*
+object: again, we've not sent down the transitive closure of
+everything reachable from the full `a` object, merely everything
+*directly* reachable from `a` in 1 hop.
+
+In this case, yes, it results in more round trips. But in many cases,
+it results in substantially less communication overhead: the test
+suite has more than doubled in speed as a result of this change.
+
+The important thing to note is that there is no change to the code you
+write. It's simply now the case that there may be more [`retry`]
+operations going on under the bonnet than are indicated by your code.
+
+Given the [last blog](/2012/03/16/interesting-bug.html)
+[posts](/2012/03/20/interesting-bug-fixed.html), you might well be
+wondering how this optimisation interacts with that bug, and its
+fix. Well, that bug was all about a client having an older version of
+an object, and through a series of events having a transaction restart
+that was able to observe both that older object at the same time as
+some updated objects which together could be used to observe a
+violation of isolation. The key thing though is that the client
+already had to have the older object.
+
+This optimisation doesn't impact the fix developed for that bug: if
+the client already has an object then it will be updated according to
+the dependency chain traversal
+[as described](/2012/03/20/interesting-bug-fixed.html), thus isolation
+is still enforced. What this optimisation achieves is that it causes
+objects managed by AtomizeJS to be brought down to the client on
+demand. When they are brought down, because the implementation just
+uses the existing [`retry`] functionality, the updates that are sent
+down are calculated using exactly the same mechanism as normal, thus
+again, the algorithm used to ensure isolation is respected is invoked.
+
+Thus, if going from *version 0* of an object to the current version,
+say *version 3* requires that some other objects the client already
+knows about be updated to current versions, then that is still
+achieved.
