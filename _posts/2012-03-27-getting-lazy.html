@@ -69,10 +69,10 @@ atomize.atomically(function () {
 the client will spot it read from a *version 0* object (`a`), and
 transparently issue a transaction up to the server which will merely
 cause the server to send down the full `a` object. The updated `a`
-object will have a `b` field which itself will point to a *version 0*
-object: again, we've not sent down the transitive closure of
-everything reachable from the full `a` object, merely everything
-*directly* reachable from `a` in one hop.
+object (now at *version 1* or greater) will have a `b` field which
+itself will point to a *version 0* object: again, we've not sent down
+the transitive closure of everything reachable from the full `a`
+object, merely everything *directly* reachable from `a` in one hop.
 
 In this case, yes, it results in more round trips. But in many cases,
 it results in substantially less communication overhead: the test
