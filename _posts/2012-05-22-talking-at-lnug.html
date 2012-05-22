@@ -1,0 +1,39 @@
+---
+layout: post
+title: Talk at London Node User Group
+---
+
+Tomorrow (23rd May 2012), I'm speaking about AtomizeJS at the
+[London Node User Group](http://lnug.org/). This will be a talk
+covering what AtomizeJS is, what problems it solves, why you should
+use it, and what you can use it for. It would be great to have a good
+audience, so if you're at all curious about AtomizeJS (or a seasoned
+user of it!), please come along. Apparently there'll be beers and
+pizza from 6:30pm!
+
+Over the last few days I've been writing various demos using AtomizeJS
+for this talk, which has been great as it's exposed lots of bugs
+(which I've fixed), and again just reinforced that sometimes, hard
+problems are just plain hard to solve!
+
+Development has been a little slower over the last month as I've been
+involved in various other projects. I spent an awful lot of time
+hacking in a security layer for AtomizeJS. All the hooks are now
+there, so you should be able to implement whatever security policies
+you want, but it's actually not clear to me how you would want to
+express such security policies. Or rather, whilst some ideas are
+fairly attractive to me, managing to achieve them in JavaScript is
+rather more painful than it ought to be. Having read around the
+subject, it's clear that since almost no one else tries to solve this
+problem, it's considered a hard problem. So I've left the hooks in but
+am yet to try to make a big deal out of it.
+
+The client now has some reconnection logic in it, so if it does lose
+connection to the server, it should attempt to reconnect. However,
+currently that's a little buggy because SockJS doesn't expose a
+disconnect due to packet drops - there's a bug filed and hopefully it
+should Just Work when the next version of SockJS comes out. Lots and
+lots of other little bugs have been fixed: it turned out that much of
+AtomizeJS was broken when writing nodejs-side code as a client of
+AtomizeJS, but thankfully in developing some demos, that's been
+exposed, and fixed.
