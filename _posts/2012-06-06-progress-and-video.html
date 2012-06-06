@@ -1,0 +1,33 @@
+---
+layout: post
+title: Progress, Presentation Video, and Slides
+---
+
+A [couple of weeks ago](/2012/05/22/talking-at-lnug.html) I gave a
+[talk](http://lanyrd.com/2012/lnug-may/coverage/) at the [London Node
+User Group](http://lnug.org/). I thought it went pretty well and the
+reaction both in person and on twitter afterwards seemed pretty
+positive.
+
+The video and [slides](/resources/LNUG_2012_05/slides.pdf) are now
+available online.
+
+<iframe src="http://player.vimeo.com/video/43034350" width="500" height="281" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe> <p><a href="http://vimeo.com/43034350">LNUG May 2012 - Matthew Sackman</a> from <a href="http://vimeo.com/forwardtechnology">Forward Technology</a> on <a href="http://vimeo.com">Vimeo</a>.</p>
+
+Recently I've really been doing general improvements, tidying up of
+the code and refactorings. Possibly not any exciting new features, but
+the basic code is in much better shape and is much much closer to
+properly enforcing the properties of JavaScript than before
+(e.g. things like only being able to delete properties that are marked
+configurable etc). Also a fairly major bug in the way [`retry`][] was
+implemented has been found and fixed, and I've done a fair amount of
+testing with the translation tool and generally trying to ensure that
+the claims that I make about compatibility really are bourne out in
+practise. Of course, IE is the most challenging target, but it is on
+the whole managable (at least, up-to-date versions of IE are).
+
+All of which means that I've bumped the versions of both the client
+and server to 0.4.9. Hopefully after some more testing and minor bug
+fixes I should be able to either move to a 0.5.0 or maybe even go to
+0.9.0 to target a possible 1.0.0 release. Thus any feedback, comments,
+questions or bug reports are [very eagerly requested][contact]!
