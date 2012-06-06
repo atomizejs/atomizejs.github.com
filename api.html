@@ -23,7 +23,10 @@ API is available in the NodeJS server as shown above under the
 * Creates a new atomize client but does not connect immediately to the
   server
 * Maximum one argument which is the URL to the AtomizeJS server
-* If no URL is provided then local-only operation is assumed
+* If no URL is provided then:
+    * If the `location.protocol` is `http` or `https` then a URL is
+      constructed as `location.host + /atomize`
+    * Otherwise offline client-local-only operation is assumed
 
 {% highlight javascript %}
 var atomize = new Atomize("http://localhost:9999/atomize");
