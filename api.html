@@ -280,7 +280,7 @@ var atomize = require('atomize-server');
 
 var httpServer = http.createServer();
 var atomizeServer = atomize.create(httpServer, '[/]atomize');
-server.listen(9999, '0.0.0.0');
+httpServer.listen(9999, '0.0.0.0');
 
 var atomizeClient = atomizeServer.client();
 {% endhighlight %}
