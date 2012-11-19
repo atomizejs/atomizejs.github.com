@@ -87,7 +87,7 @@ function start() {
     atomize.onAuthenticated = function () {
         atomize.atomically(function () {
             if (atomize.root.x === undefined) {
-                atomize.root.x = Date.toString();
+                atomize.root.x = (new Date()).toString();
                 return "Wrote " + atomize.root.x;
             } else {
                 var result = atomize.root.x;
@@ -165,7 +165,7 @@ function start() {
     atomize.onAuthenticated = function () {
         atomize.atomically(function () {
             if (atomize.root.x === undefined) {
-                atomize.root.x = Date.toString();
+                atomize.root.x = (new Date()).toString();
                 result = "Wrote " + atomize.root.x;
             } else {
                 var result = atomize.root.x;
@@ -215,7 +215,7 @@ function start() {
     atomize.onAuthenticated = function () {
         atomize.atomically(function () {
             if (atomize.root.x === undefined) {
-                atomize.root.x = Date.toString();
+                atomize.root.x = (new Date()).toString();
                 console.log("Wrote " + atomize.root.x);
             } else {
                 var result = atomize.root.x;
@@ -263,7 +263,7 @@ function start() {
         atomize.atomically(function () {
             if (atomize.root.x === undefined) {
                 atomize.root.x = atomize.lift({a: "hello"});
-                atomize.root.x.date = Date.toString();
+                atomize.root.x.date = (new Date()).toString();
                 return "Wrote " + atomize.root.x.date;
             } else {
                 var result = atomize.root.x.date;
@@ -358,7 +358,7 @@ function receive() {
 
 function send() {
     atomize.atomically(function () {
-        atomize.root.value = Date().toString();
+        atomize.root.value = (new Date()).toString();
     });
 }
 {% endhighlight %}
